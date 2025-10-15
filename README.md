@@ -31,29 +31,34 @@ Este proyecto es la renovación del sitio web [canadaallago.com](http://www.cana
 - **Deployment**: Firebase CLI
 
 ## 📦 Estructura del Proyecto
+
 canadaallago/
-├── public/
-│ ├── assets/
-│ │ ├── img/ # Imágenes y fotos
-│ │ ├── css/ # Hojas de estilo
-│ │ └── js/ # Scripts adicionales
-│ └── index.html # Template HTML
-├── src/
-│ ├── components/ # Componentes React
-│ │ ├── Header.jsx
-│ │ ├── Navbar.jsx
-│ │ ├── About.jsx
-│ │ ├── Cabanas.jsx
-│ │ ├── Gallery.jsx
-│ │ ├── Activities.jsx
-│ │ ├── Contact.jsx
-│ │ ├── Testimonials.jsx
-│ │ ├── Footer.jsx
-│ │ └── WhatsAppButton.jsx
-│ ├── App.jsx # Componente principal
-│ ├── main.jsx # Punto de entrada
-│ └── index.css # Estilos globales
-├── package.json
-├── vite.config.js
-├── firebase.json # Configuración de Firebase
-└── .env # Variables de entorno
+├── 🗂️ public/ # Archivos públicos
+│ ├── 📁 assets/
+│ │ ├── 📁 img/ # Imágenes del sitio
+│ │ │ ├── 🖼️ fotos/ # Galería de fotos
+│ │ │ └── 🏠 casas/ # Fotos de las cabañas
+│ │ ├── 📁 css/ # Hojas de estilo adicionales
+│ │ └── 📁 js/ # Scripts de terceros
+│ └── 📄 index.html # Template HTML principal
+├── 🗂️ src/ # Código fuente de la aplicación
+│ ├── 📁 components/ # Componentes React
+│ │ ├── 🧩 Header.jsx # Encabezado principal
+│ │ ├── 🧩 Navbar.jsx # Barra de navegación
+│ │ ├── 🧩 About.jsx # Sección "Inicio"
+│ │ ├── 🧩 Cabanas.jsx # Sección "Cabañas"
+│ │ ├── 🧩 Gallery.jsx # Galería de fotos
+│ │ ├── 🧩 Activities.jsx # Actividades
+│ │ ├── 🧩 Contact.jsx # Formulario de contacto
+│ │ ├── 🧩 Testimonials.jsx # Testimonios
+│ │ ├── 🧩 Footer.jsx # Pie de página
+│ │ └── 🧩 WhatsAppButton.jsx # Botón flotante
+│ ├── 🧩 App.jsx # Componente raíz
+│ ├── 🧩 main.jsx # Punto de entrada
+│ └── 📄 index.css # Estilos globales
+├── ⚙️ package.json # Dependencias y scripts
+├── ⚙️ vite.config.js # Configuración de Vite
+├── ⚙️ firebase.json # Configuración de Firebase
+├── 🔒 .env # Variables de entorno (local)
+├── 📄 .gitignore # Archivos ignorados por Git
+└── 📖 README.md # Este archivo
