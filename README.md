@@ -1,16 +1,59 @@
-# React + Vite
+# Cañada al Lago - Sitio Web Turístico
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![Cañada al Lago](https://img.shields.io/badge/Cañada-al%20Lago-green)
+![React](https://img.shields.io/badge/React-18.2.0-blue)
+![Vite](https://img.shields.io/badge/Vite-5.0.0-purple)
+![Firebase](https://img.shields.io/badge/Firebase-Hosting-orange)
 
-Currently, two official plugins are available:
+Sitio web oficial de **Cañada al Lago**, complejo de cabañas y casas de turismo ubicado en Villa Parque Siquiman, Córdoba, Argentina. Desarrollado con React + Vite y desplegado en Firebase.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🏞️ Descripción
 
-## React Compiler
+Este proyecto es la renovación del sitio web [canadaallago.com](http://www.canadaallago.com/), migrado desde HTML estático a una aplicación moderna con React y Vite para mejorar la experiencia de usuario y el rendimiento.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Características
 
-## Expanding the ESLint configuration
+- **Diseño Responsive**: Adaptado a todos los dispositivos
+- **Navegación Sútil**: Scroll suave entre secciones
+- **Galería Interactiva**: Modal para visualización de imágenes
+- **Formulario de Contacto**: Integrado con EmailJS
+- **Optimización SEO**: Meta tags y estructura semántica
+- **Rendimiento**: Carga rápida con Vite
+- **WhatsApp Integration**: Botón flotante de contacto directo
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Tecnologías Utilizadas
+
+- **Frontend**: React 18 + Vite
+- **Estilos**: Bootstrap 5 + CSS personalizado
+- **Iconos**: Font Awesome
+- **Formularios**: EmailJS
+- **Hosting**: Firebase Hosting
+- **Deployment**: Firebase CLI
+
+## 📦 Estructura del Proyecto
+canadaallago/
+├── public/
+│ ├── assets/
+│ │ ├── img/ # Imágenes y fotos
+│ │ ├── css/ # Hojas de estilo
+│ │ └── js/ # Scripts adicionales
+│ └── index.html # Template HTML
+├── src/
+│ ├── components/ # Componentes React
+│ │ ├── Header.jsx
+│ │ ├── Navbar.jsx
+│ │ ├── About.jsx
+│ │ ├── Cabanas.jsx
+│ │ ├── Gallery.jsx
+│ │ ├── Activities.jsx
+│ │ ├── Contact.jsx
+│ │ ├── Testimonials.jsx
+│ │ ├── Footer.jsx
+│ │ └── WhatsAppButton.jsx
+│ ├── App.jsx # Componente principal
+│ ├── main.jsx # Punto de entrada
+│ └── index.css # Estilos globales
+├── package.json
+├── vite.config.js
+├── firebase.json # Configuración de Firebase
+└── .env # Variables de entorno
