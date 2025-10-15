@@ -1,0 +1,260 @@
+/* Estilos globales */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Evita el desbordamiento horizontal */
+  scroll-behavior: smooth; /* Suaviza el desplazamiento */
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
+  button {
+    background-color: #f9f9f9;
+  }
+}
+
+/* Estilos para el header */
+header {
+  position: relative;
+}
+
+.intro-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-centered {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  header {
+    height: 70vh !important;
+  }
+
+  .intro-content img {
+    max-width: 200px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  header {
+    height: 60vh !important;
+  }
+
+  .intro-content img {
+    max-width: 150px !important;
+  }
+}
+
+/* Navbar Styles */
+.navbar {
+  margin-bottom: 0;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.navbar-inverse {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-color: transparent;
+}
+
+.navbar-fixed-top {
+  position: fixed;
+  right: 0;
+  left: 0;
+  z-index: 1030;
+  top: 0;
+}
+
+.navbar-expanded {
+  padding: 15px 0;
+}
+
+.navbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar-brand img {
+  max-height: 50px;
+  width: auto;
+}
+
+.navbar-nav {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-nav li a {
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 15px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.navbar-nav li a:hover {
+  color: #f05f40;
+}
+
+.navbar-right {
+  margin-left: auto;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 10px 0;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+  }
+
+  .navbar-nav li {
+    text-align: center;
+  }
+
+  .navbar-nav li a {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-nav li:last-child a {
+    border-bottom: none;
+  }
+}
+
+/* WhatsApp Button Styles */
+.btn-wsp {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  bottom: 30px;
+  right: 30px;
+  background: #25d366;
+  color: #fff;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 30px;
+  box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: all 300ms ease;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-wsp:hover {
+  background: #20bd5a;
+  transform: scale(1.1);
+}
+
+.btn-wsp svg {
+  filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-wsp {
+    width: 50px;
+    height: 50px;
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .btn-wsp svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-wsp {
+    width: 45px;
+    height: 45px;
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .btn-wsp svg {
+    width: 24px;
+    height: 24px;
+  }
+}
