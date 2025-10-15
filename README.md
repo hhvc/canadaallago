@@ -32,33 +32,37 @@ Este proyecto es la renovación del sitio web [canadaallago.com](http://www.cana
 
 ## 📦 Estructura del Proyecto
 
+## 📁 Estructura del Proyecto
+
+```bash
 canadaallago/
-├── 🗂️ public/ # Archivos públicos
-│ ├── 📁 assets/
-│ │ ├── 📁 img/ # Imágenes del sitio
-│ │ │ ├── 🖼️ fotos/ # Galería de fotos
-│ │ │ └── 🏠 casas/ # Fotos de las cabañas
-│ │ ├── 📁 css/ # Hojas de estilo adicionales
-│ │ └── 📁 js/ # Scripts de terceros
-│ └── 📄 index.html # Template HTML principal
-├── 🗂️ src/ # Código fuente de la aplicación
-│ ├── 📁 components/ # Componentes React
-│ │ ├── 🧩 Header.jsx # Encabezado principal
-│ │ ├── 🧩 Navbar.jsx # Barra de navegación
-│ │ ├── 🧩 About.jsx # Sección "Inicio"
-│ │ ├── 🧩 Cabanas.jsx # Sección "Cabañas"
-│ │ ├── 🧩 Gallery.jsx # Galería de fotos
-│ │ ├── 🧩 Activities.jsx # Actividades
-│ │ ├── 🧩 Contact.jsx # Formulario de contacto
-│ │ ├── 🧩 Testimonials.jsx # Testimonios
-│ │ ├── 🧩 Footer.jsx # Pie de página
-│ │ └── 🧩 WhatsAppButton.jsx # Botón flotante
-│ ├── 🧩 App.jsx # Componente raíz
-│ ├── 🧩 main.jsx # Punto de entrada
-│ └── 📄 index.css # Estilos globales
-├── ⚙️ package.json # Dependencias y scripts
-├── ⚙️ vite.config.js # Configuración de Vite
-├── ⚙️ firebase.json # Configuración de Firebase
-├── 🔒 .env # Variables de entorno (local)
-├── 📄 .gitignore # Archivos ignorados por Git
-└── 📖 README.md # Este archivo
+├── public/                 # Archivos estáticos públicos
+│   ├── assets/
+│   │   ├── img/           # Todas las imágenes
+│   │   │   ├── fotos/     # 📸 Galería del lugar
+│   │   │   └── casas/     # 🏠 Fotos de cabañas
+│   │   ├── css/           # 🎨 Estilos adicionales
+│   │   └── js/            # ⚡ Scripts de terceros
+│   └── index.html         # 📄 Template principal
+├── src/                   # Código fuente React
+│   ├── components/        # 🧩 Componentes React
+│   │   ├── Header.jsx     # 🏞️ Encabezado con imagen
+│   │   ├── Navbar.jsx     # 🧭 Navegación
+│   │   ├── About.jsx      # ℹ️ Sección about/inicio
+│   │   ├── Cabanas.jsx    # 🏡 Listado de cabañas
+│   │   ├── Gallery.jsx    # 🖼️ Galería interactiva
+│   │   ├── Activities.jsx # 🎯 Actividades
+│   │   ├── Contact.jsx    # 📞 Formulario contacto
+│   │   ├── Testimonials.jsx # 💬 Testimonios
+│   │   ├── Footer.jsx     # 👣 Pie de página
+│   │   └── WhatsAppButton.jsx # 💬 Botón WhatsApp
+│   ├── App.jsx            # 🔧 Componente raíz
+│   ├── main.jsx           # 🚀 Punto de entrada
+│   └── index.css          # 🎨 Estilos globales
+├── package.json           # 📦 Dependencias NPM
+├── vite.config.js         # ⚡ Configuración Vite
+├── firebase.json          # 🔥 Configuración Firebase
+├── .env                   # 🔐 Variables entorno
+├── .gitignore            # 🙈 Archivos ignorados
+└── README.md             # 📖 Documentación
+```
