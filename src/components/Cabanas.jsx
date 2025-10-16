@@ -5,20 +5,20 @@ const Cabanas = () => {
   const [showTalaEspinillo, setShowTalaEspinillo] = useState(false);
 
   const aromilloImages = [
-    "src/assets/img/fotos/casas/aromillo_1.jpg",
-    "src/assets/img/fotos/casas/aromillo_2.jpg",
-    "src/assets/img/fotos/casas/aromillo_3.jpg",
-    "src/assets/img/fotos/casas/aromillo_4.jpg",
-    "src/assets/img/fotos/casas/aromillo_5.jpg",
-    "src/assets/img/fotos/casas/aromillo_6.jpg",
-    "src/assets/img/fotos/casas/aromillo_7.jpg",
+    "/assets/img/fotos/casas/aromillo_1.jpg",
+    "/assets/img/fotos/casas/aromillo_2.jpg",
+    "/assets/img/fotos/casas/aromillo_3.jpg",
+    "/assets/img/fotos/casas/aromillo_4.jpg",
+    "/assets/img/fotos/casas/aromillo_5.jpg",
+    "/assets/img/fotos/casas/aromillo_6.jpg",
+    "/assets/img/fotos/casas/aromillo_7.jpg",
   ];
 
   const talaEspinilloImages = [
-    "src/assets/img/fotos/casas/tala_espinillo_01.jpg",
-    "src/assets/img/fotos/casas/tala_espinillo_02.jpg",
-    "src/assets/img/fotos/casas/tala_espinillo_03.jpg",
-    "src/assets/img/fotos/casas/tala_espinillo_04.jpg",
+    "/assets/img/fotos/casas/tala_espinillo_01.jpg",
+    "/assets/img/fotos/casas/tala_espinillo_02.jpg",
+    "/assets/img/fotos/casas/tala_espinillo_03.jpg",
+    "/assets/img/fotos/casas/tala_espinillo_04.jpg",
   ];
 
   const [currentAromilloImage, setCurrentAromilloImage] = useState(0);
@@ -50,7 +50,7 @@ const Cabanas = () => {
       <section
         id="cabañas"
         className="pricing py-5"
-        style={{ backgroundImage: "url('src/assets/img/bgTop2.jpg')" }}
+        style={{ backgroundImage: "url('/assets/img/bgTop2.jpg')" }}
       >
         <div className="container">
           <div className="row text-center mb-4">
@@ -63,7 +63,7 @@ const Cabanas = () => {
             <div className="col-md-4 mb-4">
               <div className="card h-100">
                 <img
-                  src="src/assets/img/fotos/Caba3.jpg"
+                  src="/assets/img/fotos/Caba3.jpg"
                   className="card-img-top"
                   alt="Casa Aromillo"
                 />
@@ -90,7 +90,7 @@ const Cabanas = () => {
             <div className="col-md-4 mb-4">
               <div className="card h-100">
                 <img
-                  src="src/assets/img/fotos/Caba1y2.jpg"
+                  src="/assets/img/fotos/Caba1y2.jpg"
                   className="card-img-top"
                   alt="Cabañas Tala y Espinillo"
                 />
@@ -117,7 +117,7 @@ const Cabanas = () => {
             <div className="col-md-4 mb-4">
               <div className="card h-100">
                 <img
-                  src="src/assets/img/fotos/Casa2.jpg"
+                  src="/assets/img/fotos/Casa2.jpg"
                   className="card-img-top"
                   alt="Casa El Aromo"
                 />
@@ -141,7 +141,7 @@ const Cabanas = () => {
             <div className="col-md-4 mb-4">
               <div className="card h-100">
                 <img
-                  src="src/assets/img/fotos/Casa1.jpg"
+                  src="/assets/img/fotos/Casa1.jpg"
                   className="card-img-top"
                   alt="Casa de Piedra"
                 />
@@ -165,7 +165,7 @@ const Cabanas = () => {
             <div className="col-md-4 mb-4">
               <div className="card h-100">
                 <img
-                  src="src/assets/img/fotos/Casa2.jpg"
+                  src="/assets/img/fotos/Casa2.jpg"
                   className="card-img-top"
                   alt="Casa Piquillín"
                 />

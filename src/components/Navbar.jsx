@@ -33,7 +33,7 @@ const Navbar = () => {
           onClick={(e) => handleScroll(e, "page-top")}
         >
           <img
-            src="src/assets/img/logo.png"
+            src="/assets/img/logo.png"
             className="img-fluid"
             alt="Cañada al Lago"
           />

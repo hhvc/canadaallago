@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer
       className="footer"
-      style={{ backgroundImage: "url('src/assets/img/bg-header.jpg')" }}
+      style={{ backgroundImage: "url('/assets/img/bg-header.jpg')" }}
     >
       <div className="container">
         <div className="row">
@@ -19,7 +19,7 @@ const Footer = () => {
                 aria-label="Visitar sitio web de ONO"
               >
                 <img
-                  src="src/assets/img/LogoTiendaOno1.png"
+                  src="/assets/img/LogoTiendaOno1.png"
                   width="50"
                   alt="Logo ONO"
                 />
