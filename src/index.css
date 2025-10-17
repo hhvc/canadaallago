@@ -307,7 +307,7 @@ header {
     float: none;
     margin-top: 0.5rem;
   }
-  
+
   .navbar-nav .nav-link.dropdown-toggle::after {
     display: inline-block;
     margin-left: 0.255em;
@@ -318,4 +318,23 @@ header {
     border-bottom: 0;
     border-left: 0.3em solid transparent;
   }
+}
+
+/* reCAPTCHA Container */
+#recaptcha-container {
+  min-height: 78px;
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+/* Asegurar que reCAPTCHA sea visible */
+.grecaptcha-badge {
+  visibility: visible !important;
+}
+
+/* Loading states */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

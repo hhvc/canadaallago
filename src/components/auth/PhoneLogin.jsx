@@ -7,22 +7,34 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     sendSMSCode,
     verifySMSCode,
     cancelPhoneAuth,
-    confirmationResult, // Esta variable sí se usa en el renderizado condicional
+    confirmationResult,
   } = useAuth();
 
-  const [step, setStep] = useState(1); // 1: input phone, 2: verify code
+  const [step, setStep] = useState(1);
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [recaptchaReady, setRecaptchaReady] = useState(false);
 
   useEffect(() => {
     if (step === 1) {
-      setupPhoneAuth("recaptcha-container");
+      const initializeRecaptcha = async () => {
+        try {
+          setMessage("Inicializando reCAPTCHA...");
+          await setupPhoneAuth("recaptcha-container");
+          setRecaptchaReady(true);
+          setMessage("");
+        } catch (error) {
+          console.error("Error inicializando reCAPTCHA:", error);
+          setMessage(`Error: ${error.message}. Recarga la página.`);
+        }
+      };
+
+      initializeRecaptcha();
     }
   }, [step, setupPhoneAuth]);
 
-  // Si confirmationResult existe, estamos en paso 2
   useEffect(() => {
     if (confirmationResult && step === 1) {
       setStep(2);
@@ -31,14 +43,27 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
 
   const handleSendCode = async (e) => {
     e.preventDefault();
+
+    if (!recaptchaReady) {
+      setMessage("reCAPTCHA no está listo. Espera un momento.");
+      return;
+    }
+
+    // Validar formato del número
+    if (!phone.startsWith("+")) {
+      setMessage("El número debe incluir código de país (ej: +5493512525252)");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
     try {
       await sendSMSCode(phone);
-      setMessage("Código enviado por SMS");
+      setMessage("✓ Código enviado por SMS. Revisa tu teléfono.");
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      setMessage(`✗ ${error.message}`);
+      setRecaptchaReady(false);
     } finally {
       setLoading(false);
     }
@@ -51,9 +76,10 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
 
     try {
       await verifySMSCode(code);
-      setMessage("Verificación exitosa");
+      setMessage("✓ Verificación exitosa. Redirigiendo...");
+      // Cerrar modal después de éxito (manejado por el componente padre)
     } catch (error) {
-      setMessage(`Error: ${error.message}`);
+      setMessage(`✗ ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -64,6 +90,7 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     setStep(1);
     setCode("");
     setMessage("");
+    setRecaptchaReady(false);
   };
 
   return (
@@ -76,29 +103,34 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
             <input
               type="tel"
               className="form-control"
-              placeholder="+54 351 1234567"
+              placeholder="+5493512525252"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
+              disabled={loading || !recaptchaReady}
             />
             <small className="form-text text-muted">
-              Ingresa tu número con código de país
+              Ingresa tu número con código de país. Ejemplo: +5493512525252
             </small>
           </div>
 
           <div id="recaptcha-container" className="mb-3"></div>
 
+          {!recaptchaReady && !message && (
+            <div className="alert alert-warning">Cargando reCAPTCHA...</div>
+          )}
+
           <button
             type="submit"
             className="btn btn-primary w-100"
-            disabled={loading}
+            disabled={loading || !recaptchaReady || !phone}
           >
-            {loading ? "Enviando..." : "Enviar Código SMS"}
+            {loading ? "Enviando código..." : "Enviar código por SMS"}
           </button>
         </form>
       )}
 
-      {(step === 2 || confirmationResult) && (
+      {step === 2 && (
         <form onSubmit={handleVerifyCode}>
           <div className="mb-3">
             <p>
@@ -107,28 +139,31 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
             <input
               type="text"
               className="form-control"
-              placeholder="Código de 6 dígitos"
+              placeholder="123456"
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} // Solo números
               required
+              maxLength={6}
+              disabled={loading}
             />
             <small className="form-text text-muted">
-              Ingresa el código que recibiste por SMS
+              Ingresa el código de 6 dígitos que recibiste por SMS
             </small>
           </div>
           <button
             type="submit"
-            className="btn btn-primary w-100"
-            disabled={loading}
+            className="btn btn-success w-100"
+            disabled={loading || code.length !== 6}
           >
-            {loading ? "Verificando..." : "Verificar Código"}
+            {loading ? "Verificando..." : "Verificar código"}
           </button>
           <button
             type="button"
             className="btn btn-link w-100"
             onClick={handleBackToPhone}
+            disabled={loading}
           >
-            Cambiar número de teléfono
+            ← Cambiar número
           </button>
         </form>
       )}
@@ -137,12 +172,14 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
         <button
           onClick={onSwitchToEmail}
           className="btn btn-outline-secondary w-100 mb-2"
+          disabled={loading}
         >
           Usar email
         </button>
         <button
           onClick={onSwitchToGoogle}
           className="btn btn-outline-primary w-100"
+          disabled={loading}
         >
           Continuar con Google
         </button>
@@ -151,7 +188,11 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
       {message && (
         <div
           className={`alert ${
-            message.includes("Error") ? "alert-danger" : "alert-info"
+            message.includes("✗")
+              ? "alert-danger"
+              : message.includes("✓")
+              ? "alert-success"
+              : "alert-info"
           } mt-3`}
         >
           {message}
