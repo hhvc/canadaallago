@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/auth/useAuth";
 
 const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
@@ -17,23 +17,65 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
   const [message, setMessage] = useState("");
   const [recaptchaReady, setRecaptchaReady] = useState(false);
 
+  const mountedRef = useRef(true);
+
   useEffect(() => {
-    if (step === 1) {
-      const initializeRecaptcha = async () => {
-        try {
-          setMessage("Inicializando reCAPTCHA...");
-          await setupPhoneAuth("recaptcha-container");
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      // limpiar cualquier verificador al desmontar
+      try {
+        cancelPhoneAuth();
+      } catch {
+        // ignore
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (step !== 1) return;
+
+    let initializing = true;
+
+    const initializeRecaptcha = async () => {
+      try {
+        if (!mountedRef.current || !initializing) return;
+
+        setMessage("Configurando verificación de seguridad...");
+        setRecaptchaReady(false);
+
+        // Pequeña espera para asegurar que el DOM se estabilice (evita problemas en StrictMode)
+        await new Promise((r) => setTimeout(r, 300));
+
+        if (!mountedRef.current || !initializing) return;
+
+        await setupPhoneAuth("recaptcha-container");
+
+        if (mountedRef.current && initializing) {
           setRecaptchaReady(true);
           setMessage("");
-        } catch (error) {
-          console.error("Error inicializando reCAPTCHA:", error);
-          setMessage(`Error: ${error.message}. Recarga la página.`);
+          console.log("✅ reCAPTCHA inicializado correctamente");
         }
-      };
+      } catch (error) {
+        console.error("❌ Error inicializando reCAPTCHA:", error);
+        if (mountedRef.current && initializing) {
+          setMessage(
+            `Error al inicializar verificación de seguridad: ${
+              error?.message || error
+            }. Recarga la página.`
+          );
+          setRecaptchaReady(false);
+        }
+      }
+    };
 
-      initializeRecaptcha();
-    }
-  }, [step, setupPhoneAuth]);
+    initializeRecaptcha();
+
+    return () => {
+      initializing = false;
+    };
+  }, [step, setupPhoneAuth, cancelPhoneAuth]);
 
   useEffect(() => {
     if (confirmationResult && step === 1) {
@@ -43,14 +85,14 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
 
   const handleSendCode = async (e) => {
     e.preventDefault();
+    if (loading) return;
 
     if (!recaptchaReady) {
-      setMessage("reCAPTCHA no está listo. Espera un momento.");
+      setMessage("Verificación no está lista. Espera un momento.");
       return;
     }
 
-    // Validar formato del número
-    if (!phone.startsWith("+")) {
+    if (!phone || !phone.startsWith("+")) {
       setMessage("El número debe incluir código de país (ej: +5493512525252)");
       return;
     }
@@ -62,31 +104,46 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
       await sendSMSCode(phone);
       setMessage("✓ Código enviado por SMS. Revisa tu teléfono.");
     } catch (error) {
-      setMessage(`✗ ${error.message}`);
+      console.error("❌ sendSMSCode:", error);
+      setMessage(`✗ ${error?.message || "Error al enviar SMS."}`);
+      // Forzar re-inicialización del reCAPTCHA en caso de fallo
       setRecaptchaReady(false);
+      // intentar reconfigurar (no bloqueante)
+      try {
+        await setupPhoneAuth("recaptcha-container");
+        setRecaptchaReady(true);
+      } catch {
+        setRecaptchaReady(false);
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
   const handleVerifyCode = async (e) => {
     e.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setMessage("");
 
     try {
       await verifySMSCode(code);
       setMessage("✓ Verificación exitosa. Redirigiendo...");
-      // Cerrar modal después de éxito (manejado por el componente padre)
     } catch (error) {
-      setMessage(`✗ ${error.message}`);
+      console.error("❌ verifySMSCode:", error);
+      setMessage(`✗ ${error?.message || "Error al verificar el código."}`);
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
   const handleBackToPhone = () => {
-    cancelPhoneAuth();
+    try {
+      cancelPhoneAuth();
+    } catch {
+      // ignore
+    }
     setStep(1);
     setCode("");
     setMessage("");
@@ -107,18 +164,24 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
-              disabled={loading || !recaptchaReady}
+              disabled={loading}
             />
             <small className="form-text text-muted">
               Ingresa tu número con código de país. Ejemplo: +5493512525252
             </small>
           </div>
 
-          <div id="recaptcha-container" className="mb-3"></div>
-
-          {!recaptchaReady && !message && (
-            <div className="alert alert-warning">Cargando reCAPTCHA...</div>
-          )}
+          {/* Contenedor reCAPTCHA (invisible visualmente, pero presente en el DOM) */}
+          <div
+            id="recaptcha-container"
+            style={{
+              position: "absolute",
+              left: "-9999px",
+              width: 1,
+              height: 1,
+              overflow: "hidden",
+            }}
+          />
 
           <button
             type="submit"
@@ -141,7 +204,7 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
               className="form-control"
               placeholder="123456"
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} // Solo números
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               required
               maxLength={6}
               disabled={loading}

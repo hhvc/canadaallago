@@ -19,20 +19,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
-
-  // Google Authentication
+  const handleError = (error, defaultMessage) => {
+    console.error("❌ Error:", error);
+    return (error && error.message) || defaultMessage;
+  };
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       return result.user;
     } catch (error) {
-      console.error("Error al iniciar sesión con Google:", error);
-      throw error;
+      throw new Error(
+        handleError(error, "Error al iniciar sesión con Google.")
+      );
     }
   };
-
-  // Email/Password Registration
   const signUpWithEmail = async (email, password, displayName) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -40,15 +41,14 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       );
-      await updateProfile(userCredential.user, { displayName });
+      if (displayName) {
+        await updateProfile(userCredential.user, { displayName });
+      }
       return userCredential.user;
     } catch (error) {
-      console.error("Error al registrarse:", error);
-      throw error;
+      throw new Error(handleError(error, "Error al registrarse."));
     }
   };
-
-  // Email/Password Login
   const signInWithEmail = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -58,273 +58,338 @@ export const AuthProvider = ({ children }) => {
       );
       return userCredential.user;
     } catch (error) {
-      console.error("Error al iniciar sesión:", error);
-      throw error;
+      throw new Error(handleError(error, "Error al iniciar sesión."));
     }
   };
-
-  // Password Reset
   const resetPassword = async (email) => {
     try {
       await sendPasswordResetEmail(auth, email);
       return true;
     } catch (error) {
-      console.error("Error al enviar email de recuperación:", error);
-      throw error;
+      throw new Error(
+        handleError(error, "Error al enviar email de recuperación.")
+      );
     }
   };
 
-  // Phone Authentication Setup - CORREGIDA
-  const setupPhoneAuth = (elementId) => {
-    return new Promise((resolve, reject) => {
-      try {
-        // Limpiar cualquier instancia previa
-        if (recaptchaVerifier) {
-          recaptchaVerifier.clear();
-          setRecaptchaVerifier(null);
-        }
-
-        // Esperar a que el DOM esté listo
-        setTimeout(() => {
-          const element = document.getElementById(elementId);
-          if (!element) {
-            reject(new Error(`Elemento con ID ${elementId} no encontrado`));
-            return;
-          }
-
-          try {
-            // Crear el verificador de reCAPTCHA
-            const verifier = new RecaptchaVerifier(
-              element,
-              {
-                size: "normal",
-                callback: () => {
-                  console.log("reCAPTCHA resuelto - listo para enviar SMS");
-                },
-                "expired-callback": () => {
-                  console.log("reCAPTCHA expirado");
-                  if (recaptchaVerifier) {
-                    recaptchaVerifier.clear();
-                    setRecaptchaVerifier(null);
-                  }
-                },
-              },
-              auth
-            );
-
-            setRecaptchaVerifier(verifier);
-            resolve(verifier);
-          } catch (error) {
-            console.error("Error creando reCAPTCHA:", error);
-            reject(error);
-          }
-        }, 100);
-      } catch (error) {
-        console.error("Error en setupPhoneAuth:", error);
-        reject(error);
+  // Carga del script enterprise (espera que index.html incluya site key; si no, intenta añadir uno genérico)
+  const loadRecaptchaScript = () =>
+    new Promise((resolve, reject) => {
+      if (window.grecaptcha) {
+        return resolve(
+          window.grecaptcha.enterprise ? "enterprise" : "standard"
+        );
       }
-    });
-  };
+      // Intento de cargar enterprise genérico (mejor tener site key en index.html)
+      const src =
+        "https://www.google.com/recaptcha/enterprise.js?render=explicit";
+      const existing = Array.from(document.getElementsByTagName("script")).find(
+        (s) => s.src && s.src.includes("recaptcha")
+      );
+      if (existing) {
+        existing.addEventListener("load", () =>
+          resolve(
+            window.grecaptcha && window.grecaptcha.enterprise
+              ? "enterprise"
+              : "standard"
+          )
+        );
+        existing.addEventListener("error", () =>
+          reject(
+            new Error("No se pudo cargar el script de reCAPTCHA Enterprise.")
+          )
+        );
+        return;
+      }
 
-  // Send SMS Code - CORREGIDA
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.defer = true;
+      script.onload = () =>
+        resolve(
+          window.grecaptcha && window.grecaptcha.enterprise
+            ? "enterprise"
+            : "standard"
+        );
+      script.onerror = () =>
+        reject(
+          new Error("No se pudo cargar el script de reCAPTCHA Enterprise.")
+        );
+      document.head.appendChild(script);
+    });
+  // setupPhoneAuth robusto: intenta varias formas de instanciar RecaptchaVerifier y logea detalles útiles
+  const setupPhoneAuth = async (elementIdOrElement) => {
+    try {
+      if (!auth || typeof auth !== "object") {
+        throw new Error(
+          "La instancia de auth no está disponible. Revisa src/firebase/config.js"
+        );
+      }
+      const mode = await loadRecaptchaScript();
+
+      // confirmar que grecaptcha.enterprise está disponible cuando se espera enterprise
+      if (
+        mode === "enterprise" &&
+        !(window.grecaptcha && window.grecaptcha.enterprise)
+      ) {
+        console.warn(
+          "Se cargó enterprise.js pero window.grecaptcha.enterprise no está disponible."
+        );
+      }
+
+      const container =
+        typeof elementIdOrElement === "string"
+          ? document.getElementById(elementIdOrElement)
+          : elementIdOrElement;
+
+      if (!container) {
+        throw new Error("Contenedor de reCAPTCHA no encontrado.");
+      }
+
+      // reutilizar si ya existe
+      if (window.recaptchaVerifier) {
+        setRecaptchaVerifier(window.recaptchaVerifier);
+        return window.recaptchaVerifier;
+      }
+
+      if (container instanceof HTMLElement) container.innerHTML = "";
+
+      const params = { size: "invisible" };
+      if (mode === "enterprise") {
+        params.badge = "bottomright";
+      }
+
+      // Compatibilidad: algunos paquetes exponen la instancia real en auth._delegate
+      const authForVerifier = auth && auth._delegate ? auth._delegate : auth;
+
+      // DEBUG: dejar trazas que te ayudarán a diagnosticar (puedes quitar luego)
+      console.debug("setupPhoneAuth: mode=", mode);
+      console.debug(
+        "setupPhoneAuth: auth typeof=",
+        typeof auth,
+        "authForVerifier typeof=",
+        typeof authForVerifier
+      );
+      console.debug(
+        "setupPhoneAuth: auth._delegate exists=",
+        !!(auth && auth._delegate)
+      );
+      console.debug(
+        "setupPhoneAuth: window._firebaseAuth=",
+        typeof window !== "undefined" ? window._firebaseAuth : undefined
+      );
+
+      const verifierTarget =
+        typeof elementIdOrElement === "string" ? elementIdOrElement : container;
+
+      // Intentos flexibles de construcción del RecaptchaVerifier
+      let verifier = null;
+      const attempts = [
+        // forma recomendada: (containerOrId, params, auth)
+        () => new RecaptchaVerifier(verifierTarget, params, authForVerifier),
+        // alternativa (alguna guía muestra (auth, containerOrId, params))
+        () => new RecaptchaVerifier(authForVerifier, verifierTarget, params),
+        // fallback: sin pasar auth (que permita al SDK usar default)
+        () => new RecaptchaVerifier(verifierTarget, params),
+      ];
+
+      let lastError = null;
+      for (const create of attempts) {
+        try {
+          verifier = create();
+          break;
+        } catch (err) {
+          lastError = err;
+          console.warn(
+            "setupPhoneAuth: intento de RecaptchaVerifier falló:",
+            err
+          );
+        }
+      }
+
+      if (!verifier) {
+        // Construcción fallida en todos los intentos: devolver error claro
+        const errMsg =
+          lastError?.message ||
+          "No se pudo crear RecaptchaVerifier con las variantes probadas.";
+        throw new Error(errMsg);
+      }
+
+      // Guardar globalmente
+      window.recaptchaVerifier = verifier;
+
+      // render -> widgetId (no se usa) - importante para inicializar internals
+      await verifier.render();
+
+      setRecaptchaVerifier(verifier);
+      return verifier;
+    } catch (error) {
+      // Incluir detalles extra si el error es de tipo interno de RecaptchaVerifier
+      const detailed = error && error.message ? error.message : error;
+      throw new Error(
+        handleError(
+          error,
+          `Error al inicializar reCAPTCHA (Enterprise). Detalle: ${detailed}`
+        )
+      );
+    }
+  };
   const sendSMSCode = async (phoneNumber) => {
     try {
-      // Validar formato del número
       const cleanedPhone = phoneNumber.replace(/\s+/g, "");
       if (!cleanedPhone.startsWith("+")) {
         throw new Error(
-          "El número debe incluir código de país (ej: +5493512525252)"
+          "El número debe incluir el código de país (ej: +5493512525252)."
         );
       }
-
-      if (cleanedPhone.length < 10) {
-        throw new Error("El número de teléfono es demasiado corto");
-      }
-
-      if (!recaptchaVerifier) {
+      const currentVerifier = recaptchaVerifier || window.recaptchaVerifier;
+      if (!currentVerifier) {
         throw new Error(
-          "reCAPTCHA no está configurado. Intenta recargar la página."
+          "Verificación de seguridad no configurada. Llama a setupPhoneAuth antes."
         );
       }
 
-      console.log("Enviando SMS a:", cleanedPhone);
+      // Usar la misma instancia interna de auth que se pudo usar para crear el verifier
+      const authForCall = auth && auth._delegate ? auth._delegate : auth;
 
-      // Verificar que reCAPTCHA esté listo
+      // Intentar obtener/ejecutar token reCAPTCHA explícitamente para diagnosticar timeout
       try {
-        await recaptchaVerifier.verify();
-      } catch (recaptchaError) {
-        console.error("Error verificando reCAPTCHA:", recaptchaError);
-        throw new Error(
-          "reCAPTCHA no está listo. Completa la verificación primero."
+        // algunos bundles exponen verify(), otros render/execute; probamos verify si existe
+        if (typeof currentVerifier.verify === "function") {
+          const token = await currentVerifier.verify();
+          console.debug(
+            "sendSMSCode: token obtenido desde verifier.verify():",
+            token
+          );
+        } else if (
+          window.grecaptcha &&
+          window.grecaptcha.enterprise &&
+          typeof window.grecaptcha.enterprise.execute === "function"
+        ) {
+          // si la API enterprise está disponible, intentar execute para el widget si existe
+          try {
+            const executeResult = await window.grecaptcha.enterprise.execute();
+            console.debug(
+              "sendSMSCode: grecaptcha.enterprise.execute() result:",
+              executeResult
+            );
+          } catch (execErr) {
+            console.debug(
+              "sendSMSCode: grecaptcha.enterprise.execute() fallo:",
+              execErr
+            );
+          }
+        } else {
+          console.debug(
+            "sendSMSCode: no se pudo ejecutar verify/execute; se delega a signInWithPhoneNumber."
+          );
+        }
+      } catch (verifyErr) {
+        console.warn(
+          "sendSMSCode: fallo al verificar/ejecutar reCAPTCHA (continuando):",
+          verifyErr
         );
       }
 
+      // Llamada principal (Firebase maneja internamente la interacción con reCAPTCHA)
       const result = await signInWithPhoneNumber(
-        auth,
+        authForCall,
         cleanedPhone,
-        recaptchaVerifier
+        currentVerifier
       );
-
       setConfirmationResult(result);
-      console.log("SMS enviado correctamente");
       return true;
     } catch (error) {
-      console.error("Error detallado al enviar SMS:", error);
-
-      // Limpiar reCAPTCHA en caso de error
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch (clearError) {
-          console.log("Error limpiando reCAPTCHA:", clearError);
-        }
-        setRecaptchaVerifier(null);
-      }
-
-      // Mensajes de error más específicos
-      let errorMessage = "Error al enviar SMS. Intenta nuevamente.";
-
-      if (error.code === "auth/invalid-phone-number") {
-        errorMessage =
-          "Número de teléfono inválido. Usa formato: +5493512525252";
-      } else if (error.code === "auth/quota-exceeded") {
-        errorMessage = "Límite de SMS excedido. Intenta más tarde.";
-      } else if (error.code === "auth/captcha-check-failed") {
-        errorMessage =
-          "Error con reCAPTCHA. Recarga la página e intenta nuevamente.";
-      } else if (error.code === "auth/too-many-requests") {
-        errorMessage = "Demasiados intentos. Espera unos minutos.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      throw new Error(errorMessage);
+      // Mejorar mensaje en caso de timeout de reCAPTCHA
+      const msg =
+        error &&
+        error.message &&
+        error.message.toLowerCase().includes("timeout")
+          ? "Timeout de reCAPTCHA: revisa que la site key enterprise esté bien configurada en Google Cloud y en Firebase, y que el dominio esté autorizado. Prueba en ventana incógnita."
+          : (error && error.message) || "Error al enviar SMS.";
+      throw new Error(handleError(error, msg));
     }
   };
-
-  // Verify SMS Code - CORREGIDA
   const verifySMSCode = async (code) => {
     try {
       if (!confirmationResult) {
-        throw new Error(
-          "No hay una verificación de teléfono en curso. Envía un SMS primero."
-        );
+        throw new Error("No hay una verificación de teléfono en curso.");
       }
-
-      // Limpiar espacios y validar código
-      const cleanedCode = code.replace(/\s+/g, "");
-      if (cleanedCode.length !== 6) {
-        throw new Error("El código debe tener 6 dígitos");
-      }
-
-      console.log("Verificando código:", cleanedCode);
-      const result = await confirmationResult.confirm(cleanedCode);
-
-      // Limpiar estados después de verificación exitosa
+      const result = await confirmationResult.confirm(code.trim());
       setConfirmationResult(null);
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch (clearError) {
-          console.log("Error limpiando reCAPTCHA:", clearError);
-        }
-        setRecaptchaVerifier(null);
-      }
-
-      console.log("Código verificado correctamente");
       return result.user;
     } catch (error) {
-      console.error("Error al verificar código:", error);
-
-      let errorMessage = "Error al verificar código. Intenta nuevamente.";
-
-      if (error.code === "auth/invalid-verification-code") {
-        errorMessage =
-          "Código inválido. Verifica el código e intenta nuevamente.";
-      } else if (error.code === "auth/code-expired") {
-        errorMessage = "Código expirado. Solicita uno nuevo.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
-      throw new Error(errorMessage);
+      throw new Error(handleError(error, "Error al verificar el código."));
     }
   };
-
-  // Cancel Phone Auth
   const cancelPhoneAuth = () => {
-    if (recaptchaVerifier) {
-      try {
+    try {
+      if (recaptchaVerifier && typeof recaptchaVerifier.clear === "function") {
         recaptchaVerifier.clear();
-      } catch (error) {
-        console.log("Error limpiando reCAPTCHA:", error);
       }
-      setRecaptchaVerifier(null);
+    } catch {
+      // ignore
     }
+    setRecaptchaVerifier(null);
+    try {
+      if (
+        window.recaptchaVerifier &&
+        typeof window.recaptchaVerifier.clear === "function"
+      ) {
+        window.recaptchaVerifier.clear();
+      }
+      delete window.recaptchaVerifier;
+    } catch {
+      // ignore
+    }
+
     setConfirmationResult(null);
   };
-
-  // Logout
-  const logout = () => {
-    // Limpiar reCAPTCHA al hacer logout
-    if (recaptchaVerifier) {
-      try {
-        recaptchaVerifier.clear();
-      } catch (error) {
-        console.log("Error limpiando reCAPTCHA:", error);
-      }
-      setRecaptchaVerifier(null);
-    }
-    setConfirmationResult(null);
-
-    return signOut(auth);
+  const logout = async () => {
+    cancelPhoneAuth();
+    await signOut(auth);
   };
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
-
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (recaptchaVerifier) {
-        try {
-          recaptchaVerifier.clear();
-        } catch (error) {
-          console.log("Error limpiando reCAPTCHA en cleanup:", error);
+      try {
+        if (
+          window.recaptchaVerifier &&
+          typeof window.recaptchaVerifier.clear === "function"
+        ) {
+          window.recaptchaVerifier.clear();
         }
+        delete window.recaptchaVerifier;
+      } catch {
+        // ignore
       }
     };
-  }, [recaptchaVerifier]);
-
+  }, []);
   const value = {
     user,
-    // Google
     signInWithGoogle,
-    // Email
     signUpWithEmail,
     signInWithEmail,
     resetPassword,
-    // Phone
     setupPhoneAuth,
     sendSMSCode,
     verifySMSCode,
     cancelPhoneAuth,
-    confirmationResult,
-    recaptchaVerifier,
-    // General
     logout,
     loading,
+    confirmationResult,
   };
-
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {" "}
+      {!loading && children}{" "}
     </AuthContext.Provider>
   );
 };

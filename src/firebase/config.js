@@ -12,8 +12,22 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+// INICIALIZACIÓN MEJORADA
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const auth = getAuth(app);
+
+// TEMPORAL: Hacer auth global para diagnóstico
+if (typeof window !== "undefined") {
+  window._firebaseAuth = auth;
+}
+
+console.log("✅ Firebase configurado:", {
+  appName: app.name,
+  projectId: app.options.projectId,
+  auth: !!auth,
+});
+
+export { auth };
 export const analytics =
   typeof window !== "undefined" ? getAnalytics(app) : null;
 export default app;
