@@ -19,10 +19,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
+
   const handleError = (error, defaultMessage) => {
     console.error("❌ Error:", error);
     return (error && error.message) || defaultMessage;
   };
+
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     try {
@@ -34,6 +36,7 @@ export const AuthProvider = ({ children }) => {
       );
     }
   };
+
   const signUpWithEmail = async (email, password, displayName) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -49,6 +52,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error(handleError(error, "Error al registrarse."));
     }
   };
+
   const signInWithEmail = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -61,6 +65,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error(handleError(error, "Error al iniciar sesión."));
     }
   };
+
   const resetPassword = async (email) => {
     try {
       await sendPasswordResetEmail(auth, email);
@@ -72,7 +77,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Carga del script enterprise (espera que index.html incluya site key; si no, intenta añadir uno genérico)
   const loadRecaptchaScript = () =>
     new Promise((resolve, reject) => {
       if (window.grecaptcha) {
@@ -80,7 +84,6 @@ export const AuthProvider = ({ children }) => {
           window.grecaptcha.enterprise ? "enterprise" : "standard"
         );
       }
-      // Intento de cargar enterprise genérico (mejor tener site key en index.html)
       const src =
         "https://www.google.com/recaptcha/enterprise.js?render=explicit";
       const existing = Array.from(document.getElementsByTagName("script")).find(
@@ -118,6 +121,7 @@ export const AuthProvider = ({ children }) => {
         );
       document.head.appendChild(script);
     });
+
   // setupPhoneAuth robusto: intenta varias formas de instanciar RecaptchaVerifier y logea detalles útiles
   const setupPhoneAuth = async (elementIdOrElement) => {
     try {
@@ -128,7 +132,6 @@ export const AuthProvider = ({ children }) => {
       }
       const mode = await loadRecaptchaScript();
 
-      // confirmar que grecaptcha.enterprise está disponible cuando se espera enterprise
       if (
         mode === "enterprise" &&
         !(window.grecaptcha && window.grecaptcha.enterprise)
@@ -147,7 +150,6 @@ export const AuthProvider = ({ children }) => {
         throw new Error("Contenedor de reCAPTCHA no encontrado.");
       }
 
-      // reutilizar si ya existe
       if (window.recaptchaVerifier) {
         setRecaptchaVerifier(window.recaptchaVerifier);
         return window.recaptchaVerifier;
@@ -156,14 +158,12 @@ export const AuthProvider = ({ children }) => {
       if (container instanceof HTMLElement) container.innerHTML = "";
 
       const params = { size: "invisible" };
-      if (mode === "enterprise") {
-        params.badge = "bottomright";
-      }
+      if (mode === "enterprise") params.badge = "bottomright";
 
       // Compatibilidad: algunos paquetes exponen la instancia real en auth._delegate
       const authForVerifier = auth && auth._delegate ? auth._delegate : auth;
 
-      // DEBUG: dejar trazas que te ayudarán a diagnosticar (puedes quitar luego)
+      // DEBUG: trazas (puedes quitar luego)
       console.debug("setupPhoneAuth: mode=", mode);
       console.debug(
         "setupPhoneAuth: auth typeof=",
@@ -186,11 +186,8 @@ export const AuthProvider = ({ children }) => {
       // Intentos flexibles de construcción del RecaptchaVerifier
       let verifier = null;
       const attempts = [
-        // forma recomendada: (containerOrId, params, auth)
         () => new RecaptchaVerifier(verifierTarget, params, authForVerifier),
-        // alternativa (alguna guía muestra (auth, containerOrId, params))
         () => new RecaptchaVerifier(authForVerifier, verifierTarget, params),
-        // fallback: sin pasar auth (que permita al SDK usar default)
         () => new RecaptchaVerifier(verifierTarget, params),
       ];
 
@@ -209,23 +206,18 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!verifier) {
-        // Construcción fallida en todos los intentos: devolver error claro
         const errMsg =
           lastError?.message ||
           "No se pudo crear RecaptchaVerifier con las variantes probadas.";
         throw new Error(errMsg);
       }
 
-      // Guardar globalmente
       window.recaptchaVerifier = verifier;
-
-      // render -> widgetId (no se usa) - importante para inicializar internals
       await verifier.render();
 
       setRecaptchaVerifier(verifier);
       return verifier;
     } catch (error) {
-      // Incluir detalles extra si el error es de tipo interno de RecaptchaVerifier
       const detailed = error && error.message ? error.message : error;
       throw new Error(
         handleError(
@@ -235,6 +227,7 @@ export const AuthProvider = ({ children }) => {
       );
     }
   };
+
   const sendSMSCode = async (phoneNumber) => {
     try {
       const cleanedPhone = phoneNumber.replace(/\s+/g, "");
@@ -250,49 +243,19 @@ export const AuthProvider = ({ children }) => {
         );
       }
 
-      // Usar la misma instancia interna de auth que se pudo usar para crear el verifier
       const authForCall = auth && auth._delegate ? auth._delegate : auth;
 
-      // Intentar obtener/ejecutar token reCAPTCHA explícitamente para diagnosticar timeout
-      try {
-        // algunos bundles exponen verify(), otros render/execute; probamos verify si existe
-        if (typeof currentVerifier.verify === "function") {
-          const token = await currentVerifier.verify();
-          console.debug(
-            "sendSMSCode: token obtenido desde verifier.verify():",
-            token
-          );
-        } else if (
-          window.grecaptcha &&
-          window.grecaptcha.enterprise &&
-          typeof window.grecaptcha.enterprise.execute === "function"
-        ) {
-          // si la API enterprise está disponible, intentar execute para el widget si existe
-          try {
-            const executeResult = await window.grecaptcha.enterprise.execute();
-            console.debug(
-              "sendSMSCode: grecaptcha.enterprise.execute() result:",
-              executeResult
-            );
-          } catch (execErr) {
-            console.debug(
-              "sendSMSCode: grecaptcha.enterprise.execute() fallo:",
-              execErr
-            );
-          }
-        } else {
-          console.debug(
-            "sendSMSCode: no se pudo ejecutar verify/execute; se delega a signInWithPhoneNumber."
-          );
-        }
-      } catch (verifyErr) {
-        console.warn(
-          "sendSMSCode: fallo al verificar/ejecutar reCAPTCHA (continuando):",
-          verifyErr
-        );
-      }
+      console.debug("sendSMSCode: calling signInWithPhoneNumber", {
+        phoneNumber: cleanedPhone,
+        verifier: currentVerifier,
+        authInfo: {
+          typeofAuth: typeof auth,
+          has_delegate: !!(auth && auth._delegate),
+          window_fb_auth:
+            typeof window !== "undefined" ? window._firebaseAuth : undefined,
+        },
+      });
 
-      // Llamada principal (Firebase maneja internamente la interacción con reCAPTCHA)
       const result = await signInWithPhoneNumber(
         authForCall,
         cleanedPhone,
@@ -301,21 +264,29 @@ export const AuthProvider = ({ children }) => {
       setConfirmationResult(result);
       return true;
     } catch (error) {
-      // Mejorar mensaje en caso de timeout de reCAPTCHA
+      // Log detallado para copiar aquí
+      console.error("sendSMSCode: error completo:", error);
+      console.error("sendSMSCode: error.code:", error?.code);
+      console.error("sendSMSCode: error.message:", error?.message);
+      console.error(
+        "sendSMSCode: posible detalles customData:",
+        error?.customData
+      );
+
       const msg =
         error &&
         error.message &&
         error.message.toLowerCase().includes("timeout")
-          ? "Timeout de reCAPTCHA: revisa que la site key enterprise esté bien configurada en Google Cloud y en Firebase, y que el dominio esté autorizado. Prueba en ventana incógnita."
+          ? "Timeout de reCAPTCHA: revisa site key / dominios y prueba en incógnito."
           : (error && error.message) || "Error al enviar SMS.";
       throw new Error(handleError(error, msg));
     }
   };
+
   const verifySMSCode = async (code) => {
     try {
-      if (!confirmationResult) {
+      if (!confirmationResult)
         throw new Error("No hay una verificación de teléfono en curso.");
-      }
       const result = await confirmationResult.confirm(code.trim());
       setConfirmationResult(null);
       return result.user;
@@ -323,6 +294,7 @@ export const AuthProvider = ({ children }) => {
       throw new Error(handleError(error, "Error al verificar el código."));
     }
   };
+
   const cancelPhoneAuth = () => {
     try {
       if (recaptchaVerifier && typeof recaptchaVerifier.clear === "function") {
@@ -346,10 +318,12 @@ export const AuthProvider = ({ children }) => {
 
     setConfirmationResult(null);
   };
+
   const logout = async () => {
     cancelPhoneAuth();
     await signOut(auth);
   };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -357,6 +331,7 @@ export const AuthProvider = ({ children }) => {
     });
     return unsubscribe;
   }, []);
+
   useEffect(() => {
     return () => {
       try {
@@ -372,6 +347,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
   }, []);
+
   const value = {
     user,
     signInWithGoogle,
@@ -386,10 +362,10 @@ export const AuthProvider = ({ children }) => {
     loading,
     confirmationResult,
   };
+
   return (
     <AuthContext.Provider value={value}>
-      {" "}
-      {!loading && children}{" "}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
