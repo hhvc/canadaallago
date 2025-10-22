@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/auth/useAuth";
 import EmailLogin from "./EmailLogin";
-import PhoneLogin from "./PhoneLogin";
+// import PhoneLogin from "./PhoneLogin"; // Comentado temporalmente
 
 const Login = () => {
   const { user, logout, signInWithGoogle } = useAuth();
@@ -85,7 +85,7 @@ const Login = () => {
                   <small className="text-muted">O elige otro método</small>
                 </div>
 
-                {/* Selector de método */}
+                {/* Selector de método - Solo email por ahora */}
                 <div className="d-flex gap-2 mb-4">
                   <button
                     onClick={() => setAuthMethod("email")}
@@ -97,6 +97,7 @@ const Login = () => {
                   >
                     Email
                   </button>
+                  {/* Comentado temporalmente - Botón de teléfono
                   <button
                     onClick={() => setAuthMethod("phone")}
                     className={`btn flex-fill ${
@@ -107,22 +108,25 @@ const Login = () => {
                   >
                     Teléfono
                   </button>
+                  */}
                 </div>
 
                 {/* Formularios */}
                 {authMethod === "email" && (
                   <EmailLogin
-                    onSwitchToPhone={() => setAuthMethod("phone")}
+                    // onSwitchToPhone={() => setAuthMethod("phone")} // Comentado temporalmente
                     onSwitchToGoogle={handleGoogleLogin}
                   />
                 )}
 
+                {/* Comentado temporalmente - Login por teléfono
                 {authMethod === "phone" && (
                   <PhoneLogin
                     onSwitchToEmail={() => setAuthMethod("email")}
                     onSwitchToGoogle={handleGoogleLogin}
                   />
                 )}
+                */}
               </div>
             </div>
           </div>

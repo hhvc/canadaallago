@@ -8,77 +8,65 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     verifySMSCode,
     cancelPhoneAuth,
     confirmationResult,
+    recaptchaReady,
   } = useAuth();
 
   const [step, setStep] = useState(1);
-  const [phone, setPhone] = useState("");
+  const [phoneDigits, setPhoneDigits] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [recaptchaReady, setRecaptchaReady] = useState(false);
 
   const mountedRef = useRef(true);
+  const recaptchaInitializedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      // limpiar cualquier verificador al desmontar
-      try {
-        cancelPhoneAuth();
-      } catch {
-        // ignore
-      }
+      cancelPhoneAuth();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cancelPhoneAuth]);
 
+  // Inicializar reCAPTCHA una sola vez
   useEffect(() => {
-    if (step !== 1) return;
-
-    let initializing = true;
+    if (step !== 1 || recaptchaInitializedRef.current) return;
 
     const initializeRecaptcha = async () => {
       try {
-        if (!mountedRef.current || !initializing) return;
-
         setMessage("Configurando verificación de seguridad...");
-        setRecaptchaReady(false);
 
-        // Pequeña espera para asegurar que el DOM se estabilice (evita problemas en StrictMode)
-        await new Promise((r) => setTimeout(r, 300));
+        console.log("🔄 PhoneLogin: Inicializando reCAPTCHA...");
 
-        if (!mountedRef.current || !initializing) return;
+        if (!mountedRef.current) return;
 
+        console.log("🔄 PhoneLogin: Llamando a setupPhoneAuth...");
         await setupPhoneAuth("recaptcha-container");
+        recaptchaInitializedRef.current = true;
 
-        if (mountedRef.current && initializing) {
-          setRecaptchaReady(true);
+        if (mountedRef.current) {
           setMessage("");
-          console.log("✅ reCAPTCHA inicializado correctamente");
+          console.log("✅ PhoneLogin: reCAPTCHA Enterprise inicializado");
         }
       } catch (error) {
-        console.error("❌ Error inicializando reCAPTCHA:", error);
-        if (mountedRef.current && initializing) {
+        console.error("❌ PhoneLogin: Error inicializando reCAPTCHA:", error);
+        if (mountedRef.current) {
           setMessage(
-            `Error al inicializar verificación de seguridad: ${
-              error?.message || error
-            }. Recarga la página.`
+            `Error de seguridad: ${error.message}. Recarga la página.`
           );
-          setRecaptchaReady(false);
+          recaptchaInitializedRef.current = false;
         }
       }
     };
 
     initializeRecaptcha();
-
-    return () => {
-      initializing = false;
-    };
-  }, [step, setupPhoneAuth, cancelPhoneAuth]);
+  }, [step, setupPhoneAuth]);
 
   useEffect(() => {
     if (confirmationResult && step === 1) {
+      console.log(
+        "✅ PhoneLogin: confirmationResult recibido, avanzando a paso 2"
+      );
       setStep(2);
     }
   }, [confirmationResult, step]);
@@ -87,34 +75,33 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     e.preventDefault();
     if (loading) return;
 
+    console.log("🔄 PhoneLogin: Iniciando envío de código...");
+    console.log("🔍 PhoneLogin: recaptchaReady:", recaptchaReady);
+
     if (!recaptchaReady) {
-      setMessage("Verificación no está lista. Espera un momento.");
+      setMessage(
+        "La verificación de seguridad no está lista. Espera un momento."
+      );
       return;
     }
 
-    if (!phone || !phone.startsWith("+")) {
-      setMessage("El número debe incluir código de país (ej: +5493512525252)");
+    const digits = phoneDigits.replace(/\D/g, "");
+    if (digits.length !== 10) {
+      setMessage("Ingresa código de área + número (10 dígitos en total)");
       return;
     }
 
+    const fullPhone = `+549${digits}`;
     setLoading(true);
-    setMessage("");
+    setMessage("Enviando código...");
 
     try {
-      await sendSMSCode(phone);
+      console.log("🔄 PhoneLogin: Llamando a sendSMSCode...");
+      await sendSMSCode(fullPhone);
       setMessage("✓ Código enviado por SMS. Revisa tu teléfono.");
     } catch (error) {
-      console.error("❌ sendSMSCode:", error);
-      setMessage(`✗ ${error?.message || "Error al enviar SMS."}`);
-      // Forzar re-inicialización del reCAPTCHA en caso de fallo
-      setRecaptchaReady(false);
-      // intentar reconfigurar (no bloqueante)
-      try {
-        await setupPhoneAuth("recaptcha-container");
-        setRecaptchaReady(true);
-      } catch {
-        setRecaptchaReady(false);
-      }
+      console.error("❌ PhoneLogin: Error en sendSMSCode:", error);
+      setMessage(`✗ ${error.message || "Error al enviar SMS."}`);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -131,24 +118,22 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
       await verifySMSCode(code);
       setMessage("✓ Verificación exitosa. Redirigiendo...");
     } catch (error) {
-      console.error("❌ verifySMSCode:", error);
-      setMessage(`✗ ${error?.message || "Error al verificar el código."}`);
+      console.error("❌ PhoneLogin: Error en verifySMSCode:", error);
+      setMessage(`✗ ${error.message || "Error al verificar el código."}`);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
   };
 
   const handleBackToPhone = () => {
-    try {
-      cancelPhoneAuth();
-    } catch {
-      // ignore
-    }
+    cancelPhoneAuth();
+    recaptchaInitializedRef.current = false;
     setStep(1);
     setCode("");
     setMessage("");
-    setRecaptchaReady(false);
   };
+
+  const displayedFullPhone = `+549${phoneDigits.replace(/\D/g, "")}`;
 
   return (
     <div>
@@ -157,21 +142,28 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
       {step === 1 && (
         <form onSubmit={handleSendCode}>
           <div className="mb-3">
-            <input
-              type="tel"
-              className="form-control"
-              placeholder="+5493512525252"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              disabled={loading}
-            />
+            <label className="form-label">Solo celulares de Argentina</label>
+            <div className="input-group">
+              <span className="input-group-text">+54 9</span>
+              <input
+                type="tel"
+                className="form-control"
+                placeholder="1198765432"
+                value={phoneDigits}
+                onChange={(e) =>
+                  setPhoneDigits(e.target.value.replace(/\D/g, ""))
+                }
+                required
+                disabled={loading}
+                maxLength={10}
+              />
+            </div>
             <small className="form-text text-muted">
-              Ingresa tu número con código de país. Ejemplo: +5493512525252
+              Ingresa código de área + número (10 dígitos). Ej: 3511234567
             </small>
           </div>
 
-          {/* Contenedor reCAPTCHA (invisible visualmente, pero presente en el DOM) */}
+          {/* Contenedor reCAPTCHA - oculto pero presente */}
           <div
             id="recaptcha-container"
             style={{
@@ -186,7 +178,11 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
           <button
             type="submit"
             className="btn btn-primary w-100"
-            disabled={loading || !recaptchaReady || !phone}
+            disabled={
+              loading ||
+              !recaptchaReady ||
+              phoneDigits.replace(/\D/g, "").length !== 10
+            }
           >
             {loading ? "Enviando código..." : "Enviar código por SMS"}
           </button>
@@ -197,7 +193,7 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
         <form onSubmit={handleVerifyCode}>
           <div className="mb-3">
             <p>
-              Verificando: <strong>{phone}</strong>
+              Verificando: <strong>{displayedFullPhone}</strong>
             </p>
             <input
               type="text"
