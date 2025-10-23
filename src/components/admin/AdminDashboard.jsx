@@ -1,9 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/auth/useAuth";
+import { useDashboardStats } from "../../hooks/useDashboardStats";
 
 const AdminDashboard = () => {
   const { user, hasRole } = useAuth();
+  const { stats, loading, error } = useDashboardStats();
 
   if (!hasRole("admin")) {
     return (
@@ -34,14 +36,40 @@ const AdminDashboard = () => {
             </div>
           </div>
 
+          {/* Mostrar error si existe */}
+          {error && (
+            <div
+              className="alert alert-warning alert-dismissible fade show"
+              role="alert"
+            >
+              <strong>Advertencia:</strong> {error}
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="alert"
+              ></button>
+            </div>
+          )}
+
           {/* Tarjetas de estadísticas rápidas */}
           <div className="row mb-5">
             <div className="col-md-3">
               <div className="card bg-primary text-white">
                 <div className="card-body text-center">
                   <i className="fa fa-home fa-2x mb-2"></i>
-                  <h4 className="mb-0">0</h4>
-                  <small>Total Cabañas</small>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.totalCabanas}</h4>
+                      <small>Total Cabañas</small>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -49,8 +77,19 @@ const AdminDashboard = () => {
               <div className="card bg-success text-white">
                 <div className="card-body text-center">
                   <i className="fa fa-check-circle fa-2x mb-2"></i>
-                  <h4 className="mb-0">0</h4>
-                  <small>Disponibles</small>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.cabanasDisponibles}</h4>
+                      <small>Disponibles</small>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -58,8 +97,19 @@ const AdminDashboard = () => {
               <div className="card bg-warning text-white">
                 <div className="card-body text-center">
                   <i className="fa fa-star fa-2x mb-2"></i>
-                  <h4 className="mb-0">0</h4>
-                  <small>Destacadas</small>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.cabanasDestacadas}</h4>
+                      <small>Destacadas</small>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -67,8 +117,19 @@ const AdminDashboard = () => {
               <div className="card bg-info text-white">
                 <div className="card-body text-center">
                   <i className="fa fa-users fa-2x mb-2"></i>
-                  <h4 className="mb-0">0</h4>
-                  <small>Usuarios</small>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.totalUsuarios}</h4>
+                      <small>Usuarios</small>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
