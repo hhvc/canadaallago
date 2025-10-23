@@ -161,9 +161,9 @@ const AdminDashboard = () => {
                   <p className="card-text">
                     Administra las imágenes de la galería del sitio web.
                   </p>
-                  <button className="btn btn-outline-secondary" disabled>
-                    Próximamente
-                  </button>
+                  <Link to="/admin/gallery" className="btn btn-success">
+                    Gestionar Galería
+                  </Link>
                 </div>
               </div>
             </div>
