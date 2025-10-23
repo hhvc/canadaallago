@@ -1,36 +1,41 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth/useAuth";
+import { Link, useNavigate } from "react-router-dom";
 import Login from "./auth/Login";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
+  const navigate = useNavigate();
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen);
-  };
-
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
   const closeMenus = () => {
     setIsMenuOpen(false);
     setIsUserMenuOpen(false);
   };
 
+  /** 🧭 Mueve a la página principal y hace scroll a la sección */
   const handleScroll = (e, targetId) => {
     e.preventDefault();
     closeMenus();
 
-    const targetElement = document.getElementById(targetId);
-    if (targetElement) {
-      targetElement.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+    // Si no estás en "/", te redirige primero y luego hace scroll
+    if (window.location.pathname !== "/") {
+      navigate("/");
+      setTimeout(() => {
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 300); // Espera a que se monte el DOM del home
+    } else {
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   };
 
@@ -38,6 +43,7 @@ const Navbar = () => {
     try {
       await logout();
       closeMenus();
+      navigate("/");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
@@ -48,9 +54,7 @@ const Navbar = () => {
     closeMenus();
   };
 
-  const closeLoginModal = () => {
-    setShowLoginModal(false);
-  };
+  const closeLoginModal = () => setShowLoginModal(false);
 
   return (
     <>
@@ -68,7 +72,7 @@ const Navbar = () => {
               style={{ maxHeight: "50px" }}
             />
           </a>
-          
+
           <button
             className="navbar-toggler"
             type="button"
@@ -79,60 +83,34 @@ const Navbar = () => {
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          
+
           <div
             className={`collapse navbar-collapse ${isMenuOpen ? "show" : ""}`}
             id="navbarNav"
           >
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item">
-                <a
-                  className="nav-link"
-                  href="#about"
-                  onClick={(e) => handleScroll(e, "about")}
-                >
-                  Inicio
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  className="nav-link"
-                  href="#cabañas"
-                  onClick={(e) => handleScroll(e, "cabañas")}
-                >
-                  Cabañas
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  className="nav-link"
-                  href="#fotos"
-                  onClick={(e) => handleScroll(e, "fotos")}
-                >
-                  Fotos
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  className="nav-link"
-                  href="#actividades"
-                  onClick={(e) => handleScroll(e, "actividades")}
-                >
-                  Actividades
-                </a>
-              </li>
-              <li className="nav-item">
-                <a
-                  className="nav-link"
-                  href="#contact"
-                  onClick={(e) => handleScroll(e, "contact")}
-                >
-                  Contacto
-                </a>
-              </li>
+              {[
+                { id: "about", label: "Inicio" },
+                { id: "cabañas", label: "Cabañas" },
+                { id: "fotos", label: "Fotos" },
+                { id: "actividades", label: "Actividades" },
+                { id: "contact", label: "Contacto" },
+              ].map(({ id, label }) => (
+                <li className="nav-item" key={id}>
+                  <a
+                    href={`#${id}`}
+                    className="nav-link"
+                    onClick={(e) => handleScroll(e, id)}
+                  >
+                    {label}
+                  </a>
+                </li>
+              ))}
 
-              {/* Menú de usuario simplificado */}
-              <li className={`nav-item dropdown ${isUserMenuOpen ? "show" : ""}`}>
+              {/* Menú de usuario */}
+              <li
+                className={`nav-item dropdown ${isUserMenuOpen ? "show" : ""}`}
+              >
                 {user ? (
                   <>
                     <a
@@ -155,17 +133,43 @@ const Navbar = () => {
                       )}
                       {user.displayName || "Usuario"}
                     </a>
-                    <ul className={`dropdown-menu ${isUserMenuOpen ? "show" : ""}`}>
+                    <ul
+                      className={`dropdown-menu dropdown-menu-end ${
+                        isUserMenuOpen ? "show" : ""
+                      }`}
+                    >
                       <li>
                         <div className="dropdown-item-text">
-                          <small>Conectado como</small><br />
+                          <small>Conectado como</small>
+                          <br />
                           <strong>{user.displayName || user.email}</strong>
+                          <br />
+                          <small className="text-muted">
+                            Rol: <strong>{user.role}</strong>
+                          </small>
                         </div>
                       </li>
-                      <li><hr className="dropdown-divider" /></li>
+                      <li>
+                        <hr className="dropdown-divider" />
+                      </li>
+
+                      {/* 🧱 Dashboard visible para admin */}
+                      {hasRole("admin") && (
+                        <li>
+                          <Link
+                            className="nav-link ps-3"
+                            to="/admin/dashboard"
+                            onClick={closeMenus}
+                          >
+                            <i className="fa fa-dashboard me-2"></i>
+                            Dashboard Admin
+                          </Link>
+                        </li>
+                      )}
+
                       <li>
                         <button
-                          className="dropdown-item"
+                          className="dropdown-item text-danger"
                           onClick={handleLogout}
                         >
                           <i className="fa fa-sign-out me-2"></i>
@@ -178,11 +182,11 @@ const Navbar = () => {
                   <button
                     className="nav-link btn btn-link"
                     onClick={openLoginModal}
-                    style={{ 
-                      border: 'none', 
-                      background: 'none', 
-                      color: 'rgba(255,255,255,0.85)',
-                      textDecoration: 'none'
+                    style={{
+                      border: "none",
+                      background: "none",
+                      color: "rgba(255,255,255,0.85)",
+                      textDecoration: "none",
                     }}
                   >
                     <i className="fa fa-user me-2"></i>
@@ -195,14 +199,14 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Modal de Login Mejorado */}
+      {/* Modal de Login */}
       {showLoginModal && (
-        <div 
-          className="modal show d-block" 
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+        <div
+          className="modal show d-block"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
           onClick={closeLoginModal}
         >
-          <div 
+          <div
             className="modal-dialog modal-dialog-centered"
             onClick={(e) => e.stopPropagation()}
           >

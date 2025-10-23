@@ -1,4 +1,4 @@
-/* Estilos globales */
+/* === Estilos globales === */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -14,19 +14,25 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* === Ajustes base === */
 html,
 body {
   margin: 0;
-  padding: 0;
+  padding: 0; /* reseteo */
   box-sizing: border-box;
-  overflow-x: hidden; /* Evita el desbordamiento horizontal */
-  scroll-behavior: smooth; /* Suaviza el desplazamiento */
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* 🧩 IMPORTANTE: padding para evitar solapamiento con navbar fijo */
+body {
+  padding-top: 70px; /* ajusta según altura del navbar */
 }
 
 a {
   font-weight: 500;
   color: #646cff;
-  text-decoration: inherit;
+  text-decoration: none;
 }
 a:hover {
   color: #535bf2;
@@ -56,6 +62,7 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* === Tema claro === */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -69,7 +76,7 @@ button:focus-visible {
   }
 }
 
-/* Estilos para el header */
+/* === Header === */
 header {
   position: relative;
 }
@@ -92,12 +99,11 @@ header {
   margin-right: auto;
 }
 
-/* Ajustes responsivos */
+/* === Responsividad de header === */
 @media (max-width: 768px) {
   header {
     height: 70vh !important;
   }
-
   .intro-content img {
     max-width: 200px !important;
   }
@@ -107,34 +113,29 @@ header {
   header {
     height: 60vh !important;
   }
-
   .intro-content img {
     max-width: 150px !important;
   }
 }
 
-/* Navbar Styles */
+/* === Navbar === */
 .navbar {
   margin-bottom: 0;
   border: none;
   transition: all 0.3s ease;
 }
 
+.navbar-fixed-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1030;
+}
+
 .navbar-inverse {
   background-color: rgba(0, 0, 0, 0.8);
   border-color: transparent;
-}
-
-.navbar-fixed-top {
-  position: fixed;
-  right: 0;
-  left: 0;
-  z-index: 1030;
-  top: 0;
-}
-
-.navbar-expanded {
-  padding: 15px 0;
 }
 
 .navbar-header {
@@ -157,12 +158,10 @@ header {
 
 .navbar-nav li a {
   color: #fff;
-  text-decoration: none;
   padding: 10px 15px;
   display: block;
   transition: color 0.3s ease;
 }
-
 .navbar-nav li a:hover {
   color: #f05f40;
 }
@@ -171,7 +170,7 @@ header {
   margin-left: auto;
 }
 
-/* Mobile Styles */
+/* === Navbar móvil === */
 @media (max-width: 768px) {
   .navbar-collapse {
     position: absolute;
@@ -200,7 +199,7 @@ header {
   }
 }
 
-/* WhatsApp Button Styles */
+/* === Botón WhatsApp === */
 .btn-wsp {
   position: fixed;
   width: 60px;
@@ -215,22 +214,19 @@ header {
   box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.3);
   z-index: 1000;
   transition: all 300ms ease;
-  text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .btn-wsp:hover {
   background: #20bd5a;
   transform: scale(1.1);
 }
-
 .btn-wsp svg {
   filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.2));
 }
 
-/* Responsive */
+/* Responsive botón WhatsApp */
 @media (max-width: 768px) {
   .btn-wsp {
     width: 50px;
@@ -238,13 +234,7 @@ header {
     bottom: 20px;
     right: 20px;
   }
-
-  .btn-wsp svg {
-    width: 28px;
-    height: 28px;
-  }
 }
-
 @media (max-width: 480px) {
   .btn-wsp {
     width: 45px;
@@ -252,17 +242,12 @@ header {
     bottom: 15px;
     right: 15px;
   }
-
-  .btn-wsp svg {
-    width: 24px;
-    height: 24px;
-  }
 }
-/* Navbar User Menu Styles */
+
+/* === Dropdown menú usuario === */
 .navbar-dark .navbar-nav .nav-link {
   color: rgba(255, 255, 255, 0.85);
 }
-
 .navbar-dark .navbar-nav .nav-link:hover {
   color: #fff;
 }
@@ -272,69 +257,56 @@ header {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.dropdown-header {
-  font-size: 0.875rem;
-  color: #6c757d;
-}
-
 .dropdown-item {
   padding: 0.5rem 1rem;
+  color: #212529 !important;
+  background-color: transparent !important;
 }
-
 .dropdown-item:hover {
-  background-color: #f8f9fa;
+  color: #0d6efd !important;
+  background-color: #f8f9fa !important;
 }
 
-/* User avatar in navbar */
+/* === Avatar usuario === */
 .navbar .rounded-circle {
   object-fit: cover;
 }
 
-/* Modal styles */
+/* === Modal === */
 .modal-backdrop {
   background-color: rgba(0, 0, 0, 0.5);
 }
-
 .modal-content {
   border: none;
   border-radius: 0.5rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .navbar-nav .dropdown-menu {
-    position: static;
-    float: none;
-    margin-top: 0.5rem;
-  }
-
-  .navbar-nav .nav-link.dropdown-toggle::after {
-    display: inline-block;
-    margin-left: 0.255em;
-    vertical-align: 0.255em;
-    content: "";
-    border-top: 0.3em solid;
-    border-right: 0.3em solid transparent;
-    border-bottom: 0;
-    border-left: 0.3em solid transparent;
-  }
-}
-
-/* reCAPTCHA Container */
+/* === reCAPTCHA === */
 #recaptcha-container {
   min-height: 78px;
   display: flex;
   justify-content: center;
   margin: 10px 0;
 }
-
-/* Asegurar que reCAPTCHA sea visible */
 .grecaptcha-badge {
   visibility: visible !important;
 }
 
-/* Loading states */
+/* === Botones deshabilitados === */
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* === FIX: visibilidad de items dentro del menú de usuario === */
+.dropdown-menu .dropdown-item,
+.dropdown-menu .nav-link {
+  color: #212529 !important; /* texto visible */
+  background-color: transparent !important;
+}
+
+.dropdown-menu .dropdown-item:hover,
+.dropdown-menu .nav-link:hover {
+  color: #0d6efd !important; /* azul Bootstrap */
+  background-color: #f8f9fa !important;
 }
