@@ -74,10 +74,9 @@ const CabanasList = () => {
       <div className="container">
         <div className="row text-center mb-5">
           <div className="col-lg-12">
-            <h1 className="text-white mb-3">Nuestras Cabañas</h1>
-            <p className="text-white-50 lead">
-              Descubre nuestro exclusivo selección de cabañas para tu escapada
-              perfecta
+            <h1 className="text-muted mb-3">Nuestras casas, casitas o cabañas</h1>
+            <p className="text-muted-50 lead">
+              Elige el lugar para tu escapada perfecta
             </p>
           </div>
         </div>

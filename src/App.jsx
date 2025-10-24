@@ -39,9 +39,9 @@ function App() {
     <>
       <Header />
       <About />
-      {/* <CabanasList /> */}
-      <Cabanas />
-      <GalleryManager />
+      <CabanasList />
+      {/* <Cabanas /> */}
+      {/* <DynamicGallery/> */}
       <Gallery />
       <Activities />
       <Contact />
@@ -76,6 +76,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/admin/listadocabanas" element={<CabanasList />} />
             <Route path="/admin/cabanas" element={<AdminCabanas />} />
             <Route path="/admin/cabanasform" element={<CabanaForm />} />
             <Route path="/galeria" element={<DynamicGallery />} />
