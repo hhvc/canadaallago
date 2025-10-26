@@ -1,8 +1,7 @@
-import React, { useState, useRef } from "react";
-import emailjs from "@emailjs/browser";
+import { useState } from "react";
+import { useContactForm } from "../hooks/useContactForm";
 
 const Contact = () => {
-  const form = useRef();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,8 +10,7 @@ const Contact = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
+  const { loading, error, success, submitContactForm } = useContactForm();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,35 +58,16 @@ const Contact = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitMessage("");
+    const success = await submitContactForm(formData);
 
-    try {
-      const result = await emailjs.sendForm(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        form.current,
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
-      );
-
-      console.log("Email enviado exitosamente:", result);
-      setSubmitMessage(
-        "¡Mensaje enviado correctamente! Te responderemos a la brevedad."
-      );
-
+    if (success) {
+      // Limpiar formulario si fue exitoso
       setFormData({
         name: "",
         email: "",
         phone: "",
         message: "",
       });
-    } catch (error) {
-      console.error("Error al enviar el email:", error);
-      setSubmitMessage(
-        "Error al enviar el mensaje. Por favor, intente nuevamente o contáctenos directamente por teléfono."
-      );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -106,7 +85,7 @@ const Contact = () => {
         </div>
         <div className="row">
           <div className="col-md-6">
-            <form ref={form} onSubmit={handleSubmit} noValidate>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="mb-3">
                 <label htmlFor="name" className="form-label">
                   Nombre
@@ -185,24 +164,22 @@ const Contact = () => {
                 )}
               </div>
 
-              {submitMessage && (
-                <div
-                  className={`alert ${
-                    submitMessage.includes("Error")
-                      ? "alert-danger"
-                      : "alert-success"
-                  }`}
-                >
-                  {submitMessage}
+              {/* Mensajes de estado */}
+              {success && (
+                <div className="alert alert-success">
+                  ¡Mensaje enviado correctamente! Te responderemos a la
+                  brevedad.
                 </div>
               )}
+
+              {error && <div className="alert alert-danger">{error}</div>}
 
               <button
                 type="submit"
                 className="btn btn-outline-dark"
-                disabled={isSubmitting}
+                disabled={loading}
               >
-                {isSubmitting ? (
+                {loading ? (
                   <>
                     <span
                       className="spinner-border spinner-border-sm me-2"
