@@ -234,14 +234,13 @@ const AdminDashboard = () => {
             <div className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="fa fa-home fa-3x text-primary mb-3"></i>
-                  <h5 className="card-title">🏠 Gestión de Cabañas</h5>
+                  <i className="fa fa-calendar fa-3x text-info mb-3"></i>
+                  <h5 className="card-title">📅 Calendario</h5>
                   <p className="card-text">
-                    Administra todas las cabañas: crear, editar, eliminar y
-                    configurar disponibilidad.
+                    Gestiona seguimientos y eventos programados con contactos.
                   </p>
-                  <Link to="/admin/cabanas" className="btn btn-primary">
-                    Gestionar Cabañas
+                  <Link to="/admin/calendar" className="btn btn-info">
+                    Ver Calendario
                   </Link>
                 </div>
               </div>
@@ -278,6 +277,22 @@ const AdminDashboard = () => {
                   </p>
                   <Link to="/admin/gallery" className="btn btn-warning">
                     Gestionar Galería
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6 col-lg-4 mb-4">
+              <div className="card h-100 shadow-sm">
+                <div className="card-body text-center">
+                  <i className="fa fa-home fa-3x text-primary mb-3"></i>
+                  <h5 className="card-title">🏠 Gestión de Cabañas</h5>
+                  <p className="card-text">
+                    Administra todas las cabañas: crear, editar, eliminar y
+                    configurar disponibilidad.
+                  </p>
+                  <Link to="/admin/cabanas" className="btn btn-primary">
+                    Gestionar Cabañas
                   </Link>
                 </div>
               </div>

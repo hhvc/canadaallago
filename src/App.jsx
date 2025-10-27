@@ -17,9 +17,10 @@ import CabanasList from "./components/cabanas/CabanasList";
 import AdminCabanas from "./components/cabanas/AdminCabanas";
 import AdminDashboard from "./components/admin/AdminDashboard";
 import CabanaForm from "./components/cabanas/CabanaForm";
-import GalleryManager from "./components/GalleryManager";
+import GalleryManager from "./components/admin/GalleryManager";
 import DynamicGallery from "./components/DynamicGallery";
-import ContactMessages from './components/ContactMessages';
+import ContactMessages from "./components/admin/ContactMessages";
+import Calendar from "./components/admin/Calendar";
 
 import AccessDenied from "./components/AccessDenied";
 
@@ -81,6 +82,7 @@ function App() {
             <Route path="/admin/cabanasform" element={<CabanaForm />} />
             <Route path="/galeria" element={<DynamicGallery />} />
             <Route path="/admin/contactos" element={<ContactMessages />} />
+            <Route path="/admin/calendar" element={<Calendar />} />
 
             {/* Puedes agregar más rutas aquí en el futuro */}
             {/* Ruta 404 */}

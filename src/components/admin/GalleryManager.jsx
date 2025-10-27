@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import { useAuth } from "../context/auth/useAuth";
-import { useGalleryImages } from "../hooks/useGalleryImages";
+import { useAuth } from "../../context/auth/useAuth";
+import { useGalleryImages } from "../../hooks/useGalleryImages";
 
 const GalleryManager = () => {
   const { user, hasRole } = useAuth();
