@@ -20,7 +20,8 @@ import CabanaForm from "./components/cabanas/CabanaForm";
 import GalleryManager from "./components/admin/GalleryManager";
 import DynamicGallery from "./components/DynamicGallery";
 import ContactMessages from "./components/admin/ContactMessages";
-import Calendar from "./components/admin/Calendar";
+import Calendar from "./components/admin/calendar/Calendar";
+import ReservationManagement from "./components/admin/ReservationManagement";
 
 import AccessDenied from "./components/AccessDenied";
 
@@ -60,6 +61,8 @@ function App() {
             {/* Rutas públicas */}
             <Route path="/" element={<HomePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
+            <Route path="/galeria" element={<DynamicGallery />} />
+
             {/* Rutas protegidas para administradores */}
             <Route
               path="/admin/dashboard"
@@ -77,12 +80,54 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/admin/listadocabanas" element={<CabanasList />} />
-            <Route path="/admin/cabanas" element={<AdminCabanas />} />
-            <Route path="/admin/cabanasform" element={<CabanaForm />} />
-            <Route path="/galeria" element={<DynamicGallery />} />
-            <Route path="/admin/contactos" element={<ContactMessages />} />
-            <Route path="/admin/calendar" element={<Calendar />} />
+            <Route
+              path="/admin/listadocabanas"
+              element={
+                <ProtectedRoute role="admin">
+                  <CabanasList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cabanas"
+              element={
+                <ProtectedRoute role="admin">
+                  <AdminCabanas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/cabanasform"
+              element={
+                <ProtectedRoute role="admin">
+                  <CabanaForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/contactos"
+              element={
+                <ProtectedRoute role="admin">
+                  <ContactMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/calendar"
+              element={
+                <ProtectedRoute role="admin">
+                  <Calendar /> {/* ✅ Ahora usa la ruta correcta */}
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reservas"
+              element={
+                <ProtectedRoute role="admin">
+                  <ReservationManagement />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Puedes agregar más rutas aquí en el futuro */}
             {/* Ruta 404 */}

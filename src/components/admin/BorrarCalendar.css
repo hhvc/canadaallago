@@ -1,0 +1,15 @@
+/* components/admin/Calendar.css */
+
+.calendar-day {
+  height: 120px;
+  vertical-align: top;
+}
+
+.calendar-events {
+  max-height: 90px;
+  overflow-y: auto;
+}
+
+.calendar-events div {
+  cursor: default;
+}

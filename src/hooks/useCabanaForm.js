@@ -3,7 +3,6 @@ import { serverTimestamp } from "firebase/firestore";
 import { uploadMultipleImages } from "../utils/imageUtils";
 
 export const useCabanaForm = (cabanaExistente, onSave) => {
-  // Removido onCancel
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -12,14 +11,11 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
     dormitorios: "",
     caracteristicas: [""],
     imagenes: [""],
-    precioTemporada: "",
-    mostrarPrecioTemporada: false,
-    precioQuincena: "",
-    mostrarPrecioQuincena: false,
-    precioNoche: "",
-    mostrarPrecioNoche: false,
-    adicionalPorPersona: "",
-    mostrarAdicionalPorPersona: false,
+    // NUEVA ESTRUCTURA DE PRECIOS
+    precios: {
+      base: "",
+      temporadas: [],
+    },
     disponible: true,
     destacada: false,
     orden: 0,
@@ -32,6 +28,27 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
   // Cargar datos si estamos editando
   useEffect(() => {
     if (cabanaExistente) {
+      // Manejar la migración de la estructura antigua de precios a la nueva
+      let preciosData = {
+        base: "",
+        temporadas: [],
+      };
+
+      // Si existe la estructura nueva, usarla
+      if (cabanaExistente.precios) {
+        preciosData = {
+          base: cabanaExistente.precios.base?.toString() || "",
+          temporadas: cabanaExistente.precios.temporadas || [],
+        };
+      }
+      // Si no, migrar desde la estructura antigua
+      else if (cabanaExistente.precioNoche) {
+        preciosData = {
+          base: cabanaExistente.precioNoche.toString() || "",
+          temporadas: [],
+        };
+      }
+
       setFormData({
         nombre: cabanaExistente.nombre || "",
         descripcion: cabanaExistente.descripcion || "",
@@ -46,16 +63,8 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
           cabanaExistente.imagenes?.length > 0
             ? [...cabanaExistente.imagenes, ""]
             : [""],
-        precioTemporada: cabanaExistente.precioTemporada?.toString() || "",
-        mostrarPrecioTemporada: cabanaExistente.mostrarPrecioTemporada || false,
-        precioQuincena: cabanaExistente.precioQuincena?.toString() || "",
-        mostrarPrecioQuincena: cabanaExistente.mostrarPrecioQuincena || false,
-        precioNoche: cabanaExistente.precioNoche?.toString() || "",
-        mostrarPrecioNoche: cabanaExistente.mostrarPrecioNoche || false,
-        adicionalPorPersona:
-          cabanaExistente.adicionalPorPersona?.toString() || "",
-        mostrarAdicionalPorPersona:
-          cabanaExistente.mostrarAdicionalPorPersona || false,
+        // NUEVA ESTRUCTURA
+        precios: preciosData,
         disponible: cabanaExistente.disponible ?? true,
         destacada: cabanaExistente.destacada || false,
         orden: cabanaExistente.orden || 0,
@@ -77,21 +86,48 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
       newErrors.dormitorios = "Debe tener al menos 1 dormitorio";
     }
 
-    // Validar precios
-    if (formData.precioTemporada && parseFloat(formData.precioTemporada) < 0) {
-      newErrors.precioTemporada = "El precio debe ser mayor o igual a 0";
+    // ✅ NUEVA VALIDACIÓN: Precio base
+    if (!formData.precios.base || parseFloat(formData.precios.base) <= 0) {
+      newErrors.precioBase = "El precio base debe ser mayor a 0";
     }
-    if (formData.precioQuincena && parseFloat(formData.precioQuincena) < 0) {
-      newErrors.precioQuincena = "El precio debe ser mayor o igual a 0";
-    }
-    if (formData.precioNoche && parseFloat(formData.precioNoche) < 0) {
-      newErrors.precioNoche = "El precio debe ser mayor o igual a 0";
-    }
-    if (
-      formData.adicionalPorPersona &&
-      parseFloat(formData.adicionalPorPersona) < 0
-    ) {
-      newErrors.adicionalPorPersona = "El adicional debe ser mayor o igual a 0";
+
+    // ✅ NUEVA VALIDACIÓN: Temporadas
+    if (formData.precios.temporadas && formData.precios.temporadas.length > 0) {
+      formData.precios.temporadas.forEach((temporada, index) => {
+        if (!temporada.nombre?.trim()) {
+          newErrors[`temporada_${index}_nombre`] =
+            "El nombre de la temporada es requerido";
+        }
+        if (!temporada.multiplicador || temporada.multiplicador < 1) {
+          newErrors[`temporada_${index}_multiplicador`] =
+            "El multiplicador debe ser al menos 1";
+        }
+        if (temporada.tipo === "fechas") {
+          if (!temporada.fechaInicio) {
+            newErrors[`temporada_${index}_fechaInicio`] =
+              "La fecha de inicio es requerida";
+          }
+          if (!temporada.fechaFin) {
+            newErrors[`temporada_${index}_fechaFin`] =
+              "La fecha de fin es requerida";
+          }
+          if (
+            temporada.fechaInicio &&
+            temporada.fechaFin &&
+            new Date(temporada.fechaInicio) > new Date(temporada.fechaFin)
+          ) {
+            newErrors[`temporada_${index}_fechas`] =
+              "La fecha de inicio debe ser anterior a la fecha de fin";
+          }
+        }
+        if (
+          temporada.tipo === "diasSemana" &&
+          (!temporada.diasSemana || temporada.diasSemana.length === 0)
+        ) {
+          newErrors[`temporada_${index}_diasSemana`] =
+            "Debe seleccionar al menos un día de la semana";
+        }
+      });
     }
 
     const imagenesValidas = formData.imagenes.filter(
@@ -148,6 +184,7 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
       return;
     }
 
+    // Preparar datos para guardar
     const cabanaData = {
       nombre: formData.nombre.trim(),
       descripcion: formData.descripcion.trim(),
@@ -160,22 +197,22 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
       imagenes: formData.imagenes
         .filter((img) => img.trim() !== "")
         .map((img) => img.trim()),
-      precioTemporada: formData.precioTemporada
-        ? parseFloat(formData.precioTemporada)
-        : null,
-      mostrarPrecioTemporada: formData.mostrarPrecioTemporada,
-      precioQuincena: formData.precioQuincena
-        ? parseFloat(formData.precioQuincena)
-        : null,
-      mostrarPrecioQuincena: formData.mostrarPrecioQuincena,
-      precioNoche: formData.precioNoche
-        ? parseFloat(formData.precioNoche)
-        : null,
-      mostrarPrecioNoche: formData.mostrarPrecioNoche,
-      adicionalPorPersona: formData.adicionalPorPersona
-        ? parseFloat(formData.adicionalPorPersona)
-        : null,
-      mostrarAdicionalPorPersona: formData.mostrarAdicionalPorPersona,
+      // ✅ NUEVA ESTRUCTURA DE PRECIOS
+      precios: {
+        base: parseFloat(formData.precios.base),
+        temporadas: formData.precios.temporadas.map((temporada) => ({
+          nombre: temporada.nombre.trim(),
+          tipo: temporada.tipo,
+          multiplicador: parseFloat(temporada.multiplicador),
+          ...(temporada.tipo === "fechas" && {
+            fechaInicio: temporada.fechaInicio,
+            fechaFin: temporada.fechaFin,
+          }),
+          ...(temporada.tipo === "diasSemana" && {
+            diasSemana: temporada.diasSemana,
+          }),
+        })),
+      },
       disponible: formData.disponible,
       destacada: formData.destacada,
       orden: parseInt(formData.orden),
@@ -212,17 +249,83 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
     }));
   };
 
-  const handleInputChange = (field, value) => {
+  // ✅ NUEVAS FUNCIONES PARA MANEJAR TEMPORADAS
+  const addTemporada = () => {
     setFormData((prev) => ({
       ...prev,
-      [field]: value,
+      precios: {
+        ...prev.precios,
+        temporadas: [
+          ...(prev.precios?.temporadas || []),
+          {
+            nombre: "",
+            tipo: "fechas",
+            multiplicador: 1.5,
+            fechaInicio: "",
+            fechaFin: "",
+            diasSemana: [],
+          },
+        ],
+      },
+    }));
+  };
+
+  const removeTemporada = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      precios: {
+        ...prev.precios,
+        temporadas:
+          prev.precios?.temporadas?.filter((_, i) => i !== index) || [],
+      },
+    }));
+  };
+
+  const updateTemporada = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      precios: {
+        ...prev.precios,
+        temporadas:
+          prev.precios?.temporadas?.map((temporada, i) =>
+            i === index ? { ...temporada, [field]: value } : temporada
+          ) || [],
+      },
     }));
 
-    // Limpiar error del campo cuando el usuario empiece a escribir
-    if (errors[field]) {
+    // Limpiar errores específicos de esta temporada cuando se modifica
+    if (errors[`temporada_${index}_${field}`]) {
       setErrors((prev) => ({
         ...prev,
-        [field]: "",
+        [`temporada_${index}_${field}`]: "",
+      }));
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    // Manejar campos anidados como "precios.base"
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+
+    // Limpiar error del campo cuando el usuario empiece a escribir
+    const errorField = field.includes(".") ? field.split(".")[1] : field;
+    if (errors[errorField]) {
+      setErrors((prev) => ({
+        ...prev,
+        [errorField]: "",
       }));
     }
   };
@@ -246,5 +349,9 @@ export const useCabanaForm = (cabanaExistente, onSave) => {
     removeCampoArray,
     updateCampoArray,
     removeImagen,
+    // ✅ EXPORTAR NUEVAS FUNCIONES
+    addTemporada,
+    removeTemporada,
+    updateTemporada,
   };
 };

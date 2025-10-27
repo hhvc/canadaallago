@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import ReservationSystem from "../components/ReservationSystem"; // Asegúrate de que la ruta sea correcta
 
 const Cabana = ({ cabana }) => {
   const [showModal, setShowModal] = useState(false);
+  const [showReservationModal, setShowReservationModal] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [imageLoading, setImageLoading] = useState(true);
   const [imagesLoaded, setImagesLoaded] = useState({}); // Track loaded images
@@ -16,6 +18,14 @@ const Cabana = ({ cabana }) => {
   const closeModal = () => {
     setShowModal(false);
     setCurrentImage(0);
+  };
+
+  const openReservationModal = () => {
+    setShowReservationModal(true);
+  };
+
+  const closeReservationModal = () => {
+    setShowReservationModal(false);
   };
 
   const nextImage = (e) => {
@@ -81,6 +91,12 @@ const Cabana = ({ cabana }) => {
               }}
               onClick={() => openModal(0)}
             />
+            {/* Badge de estado */}
+            {cabana.disponible === false && (
+              <div className="position-absolute top-0 end-0 m-2">
+                <span className="badge bg-danger">NO DISPONIBLE</span>
+              </div>
+            )}
           </div>
 
           <div className="card-body d-flex flex-column">
@@ -103,10 +119,30 @@ const Cabana = ({ cabana }) => {
                     📸 VER FOTOS
                   </button>
                 )}
+
+                {/* Botón de reserva - Solo mostrar si está disponible */}
+                {cabana.disponible !== false && (
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={openReservationModal}
+                  >
+                    📅 RESERVAR
+                  </button>
+                )}
+
                 <a href="#contact" className="btn btn-outline-light btn-sm">
                   💰 Consultar precio
                 </a>
               </div>
+
+              {/* Mostrar mensaje si no está disponible */}
+              {cabana.disponible === false && (
+                <div className="mt-2">
+                  <small className="text-warning">
+                    ⚠️ Actualmente no disponible para reservas
+                  </small>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -201,6 +237,40 @@ const Cabana = ({ cabana }) => {
                     </button>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Reservas */}
+      {showReservationModal && (
+        <div
+          className="modal fade show"
+          style={{
+            display: "block",
+            backgroundColor: "rgba(0,0,0,0.8)",
+          }}
+          onClick={closeReservationModal}
+        >
+          <div
+            className="modal-dialog modal-xl modal-dialog-centered"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content">
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title">📅 Reservar {cabana.nombre}</h5>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={closeReservationModal}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <ReservationSystem
+                  cabana={cabana}
+                  onClose={closeReservationModal}
+                />
               </div>
             </div>
           </div>

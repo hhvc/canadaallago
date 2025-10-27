@@ -21,6 +21,9 @@ const CabanaForm = ({
     removeCampoArray,
     updateCampoArray,
     removeImagen,
+    addTemporada,
+    removeTemporada,
+    updateTemporada,
   } = useCabanaForm(cabanaExistente, onSave);
 
   const isSubmitting = loading || internalLoading;
@@ -36,6 +39,17 @@ const CabanaForm = ({
       fileInputRef.current.value = "";
     }
   };
+
+  // Opciones para días de la semana
+  const diasSemanaOptions = [
+    { value: 0, label: "Domingo" },
+    { value: 1, label: "Lunes" },
+    { value: 2, label: "Martes" },
+    { value: 3, label: "Miércoles" },
+    { value: 4, label: "Jueves" },
+    { value: 5, label: "Viernes" },
+    { value: 6, label: "Sábado" },
+  ];
 
   return (
     <div className="card mt-5">
@@ -184,224 +198,301 @@ const CabanaForm = ({
             </div>
           </div>
 
-          {/* Configuración de Precios */}
+          {/* NUEVA: Configuración de Precios por Temporada */}
           <div className="mb-4">
             <div className="card bg-light">
-              <div className="card-header bg-secondary text-white">
-                <h6 className="mb-0">💰 Configuración de Precios</h6>
+              <div className="card-header bg-success text-white">
+                <h6 className="mb-0">💰 Sistema de Precios por Temporada</h6>
               </div>
               <div className="card-body">
-                <div className="row">
+                {/* Precio Base */}
+                <div className="row mb-4">
                   <div className="col-md-6">
-                    {/* Precio por temporada */}
                     <div className="mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <label className="form-label fw-bold">
-                          Precio base por temporada
-                        </label>
-                        <div className="form-check form-switch">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={formData.mostrarPrecioTemporada}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "mostrarPrecioTemporada",
-                                e.target.checked
-                              )
-                            }
-                            id="mostrarPrecioTemporadaSwitch"
-                          />
-                          <label
-                            className="form-check-label small"
-                            htmlFor="mostrarPrecioTemporadaSwitch"
-                          >
-                            Mostrar
-                          </label>
-                        </div>
-                      </div>
+                      <label className="form-label fw-bold">
+                        Precio Base por Noche{" "}
+                        <span className="text-danger">*</span>
+                      </label>
                       <div className="input-group">
                         <span className="input-group-text">$</span>
                         <input
                           type="number"
                           step="0.01"
                           className={`form-control ${
-                            errors.precioTemporada ? "is-invalid" : ""
+                            errors.precioBase ? "is-invalid" : ""
                           }`}
-                          value={formData.precioTemporada}
+                          value={formData.precios?.base || ""}
                           onChange={(e) =>
-                            handleInputChange("precioTemporada", e.target.value)
+                            handleInputChange("precios.base", e.target.value)
                           }
                           min="0"
-                          placeholder="Opcional"
+                          placeholder="Ej: 150"
+                          required
                         />
                       </div>
-                      {errors.precioTemporada && (
+                      {errors.precioBase && (
                         <div className="invalid-feedback d-block">
-                          {errors.precioTemporada}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Precio por quincena */}
-                    <div className="mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <label className="form-label fw-bold">
-                          Precio base por quincena
-                        </label>
-                        <div className="form-check form-switch">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={formData.mostrarPrecioQuincena}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "mostrarPrecioQuincena",
-                                e.target.checked
-                              )
-                            }
-                            id="mostrarPrecioQuincenaSwitch"
-                          />
-                          <label
-                            className="form-check-label small"
-                            htmlFor="mostrarPrecioQuincenaSwitch"
-                          >
-                            Mostrar
-                          </label>
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <span className="input-group-text">$</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className={`form-control ${
-                            errors.precioQuincena ? "is-invalid" : ""
-                          }`}
-                          value={formData.precioQuincena}
-                          onChange={(e) =>
-                            handleInputChange("precioQuincena", e.target.value)
-                          }
-                          min="0"
-                          placeholder="Opcional"
-                        />
-                      </div>
-                      {errors.precioQuincena && (
-                        <div className="invalid-feedback d-block">
-                          {errors.precioQuincena}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="col-md-6">
-                    {/* Precio por noche */}
-                    <div className="mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <label className="form-label fw-bold">
-                          Precio base por noche
-                        </label>
-                        <div className="form-check form-switch">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={formData.mostrarPrecioNoche}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "mostrarPrecioNoche",
-                                e.target.checked
-                              )
-                            }
-                            id="mostrarPrecioNocheSwitch"
-                          />
-                          <label
-                            className="form-check-label small"
-                            htmlFor="mostrarPrecioNocheSwitch"
-                          >
-                            Mostrar
-                          </label>
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <span className="input-group-text">$</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className={`form-control ${
-                            errors.precioNoche ? "is-invalid" : ""
-                          }`}
-                          value={formData.precioNoche}
-                          onChange={(e) =>
-                            handleInputChange("precioNoche", e.target.value)
-                          }
-                          min="0"
-                          placeholder="Opcional"
-                        />
-                      </div>
-                      {errors.precioNoche && (
-                        <div className="invalid-feedback d-block">
-                          {errors.precioNoche}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Adicional por persona */}
-                    <div className="mb-3">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <label className="form-label fw-bold">
-                          Adicional diario por persona
-                        </label>
-                        <div className="form-check form-switch">
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            checked={formData.mostrarAdicionalPorPersona}
-                            onChange={(e) =>
-                              handleInputChange(
-                                "mostrarAdicionalPorPersona",
-                                e.target.checked
-                              )
-                            }
-                            id="mostrarAdicionalPorPersonaSwitch"
-                          />
-                          <label
-                            className="form-check-label small"
-                            htmlFor="mostrarAdicionalPorPersonaSwitch"
-                          >
-                            Mostrar
-                          </label>
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <span className="input-group-text">$</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          className={`form-control ${
-                            errors.adicionalPorPersona ? "is-invalid" : ""
-                          }`}
-                          value={formData.adicionalPorPersona}
-                          onChange={(e) =>
-                            handleInputChange(
-                              "adicionalPorPersona",
-                              e.target.value
-                            )
-                          }
-                          min="0"
-                          placeholder="Opcional"
-                        />
-                      </div>
-                      {errors.adicionalPorPersona && (
-                        <div className="invalid-feedback d-block">
-                          {errors.adicionalPorPersona}
+                          {errors.precioBase}
                         </div>
                       )}
                       <small className="form-text text-muted">
-                        Precio adicional por persona más allá de la capacidad
-                        base
+                        Precio estándar por noche. Las temporadas se calculan
+                        como multiplicadores de este precio.
                       </small>
                     </div>
                   </div>
+                </div>
+
+                {/* Temporadas */}
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <label className="form-label fw-bold">
+                      Temporadas Especiales
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={addTemporada}
+                    >
+                      ➕ Agregar Temporada
+                    </button>
+                  </div>
+
+                  {formData.precios?.temporadas?.map((temporada, index) => (
+                    <div key={index} className="card mb-3 border-primary">
+                      <div className="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
+                        <span>Temporada {index + 1}</span>
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => removeTemporada(index)}
+                        >
+                          ✕ Eliminar
+                        </button>
+                      </div>
+                      <div className="card-body">
+                        <div className="row">
+                          <div className="col-md-6">
+                            <div className="mb-3">
+                              <label className="form-label">
+                                Nombre de la Temporada
+                              </label>
+                              <input
+                                type="text"
+                                className="form-control"
+                                value={temporada.nombre}
+                                onChange={(e) =>
+                                  updateTemporada(
+                                    index,
+                                    "nombre",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Ej: Temporada Alta Verano"
+                              />
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="mb-3">
+                              <label className="form-label">Tipo</label>
+                              <select
+                                className="form-select"
+                                value={temporada.tipo || "fechas"}
+                                onChange={(e) =>
+                                  updateTemporada(index, "tipo", e.target.value)
+                                }
+                              >
+                                <option value="fechas">
+                                  Por Fechas Específicas
+                                </option>
+                                <option value="diasSemana">
+                                  Por Días de la Semana
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="row">
+                          <div className="col-md-4">
+                            <div className="mb-3">
+                              <label className="form-label">
+                                Multiplicador
+                              </label>
+                              <div className="input-group">
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="1"
+                                  max="3"
+                                  className="form-control"
+                                  value={temporada.multiplicador || 1}
+                                  onChange={(e) =>
+                                    updateTemporada(
+                                      index,
+                                      "multiplicador",
+                                      parseFloat(e.target.value)
+                                    )
+                                  }
+                                  placeholder="1.5"
+                                />
+                                <span className="input-group-text">x</span>
+                              </div>
+                              <small className="form-text text-muted">
+                                Ej: 1.5 = 150% del precio base
+                              </small>
+                            </div>
+                          </div>
+
+                          {/* Campos según el tipo de temporada */}
+                          {temporada.tipo === "fechas" ? (
+                            <>
+                              <div className="col-md-4">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Fecha Inicio
+                                  </label>
+                                  <input
+                                    type="date"
+                                    className="form-control"
+                                    value={temporada.fechaInicio || ""}
+                                    onChange={(e) =>
+                                      updateTemporada(
+                                        index,
+                                        "fechaInicio",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                              <div className="col-md-4">
+                                <div className="mb-3">
+                                  <label className="form-label">
+                                    Fecha Fin
+                                  </label>
+                                  <input
+                                    type="date"
+                                    className="form-control"
+                                    value={temporada.fechaFin || ""}
+                                    onChange={(e) =>
+                                      updateTemporada(
+                                        index,
+                                        "fechaFin",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="col-md-8">
+                              <div className="mb-3">
+                                <label className="form-label">
+                                  Días de la Semana
+                                </label>
+                                <div className="d-flex flex-wrap gap-2">
+                                  {diasSemanaOptions.map((dia) => (
+                                    <div key={dia.value} className="form-check">
+                                      <input
+                                        type="checkbox"
+                                        className="form-check-input"
+                                        id={`temporada-${index}-dia-${dia.value}`}
+                                        checked={
+                                          temporada.diasSemana?.includes(
+                                            dia.value
+                                          ) || false
+                                        }
+                                        onChange={(e) => {
+                                          const currentDias =
+                                            temporada.diasSemana || [];
+                                          let newDias;
+                                          if (e.target.checked) {
+                                            newDias = [
+                                              ...currentDias,
+                                              dia.value,
+                                            ];
+                                          } else {
+                                            newDias = currentDias.filter(
+                                              (d) => d !== dia.value
+                                            );
+                                          }
+                                          updateTemporada(
+                                            index,
+                                            "diasSemana",
+                                            newDias
+                                          );
+                                        }}
+                                      />
+                                      <label
+                                        className="form-check-label small"
+                                        htmlFor={`temporada-${index}-dia-${dia.value}`}
+                                      >
+                                        {dia.label}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                                <small className="form-text text-muted">
+                                  Selecciona los días que aplican para esta
+                                  temporada
+                                </small>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Resumen de la temporada */}
+                        <div className="alert alert-info py-2 small">
+                          <strong>Resumen:</strong>{" "}
+                          {temporada.nombre || "Sin nombre"} - Multiplicador:{" "}
+                          {temporada.multiplicador || 1}x = $
+                          {(
+                            (formData.precios?.base || 0) *
+                            (temporada.multiplicador || 1)
+                          ).toFixed(2)}{" "}
+                          por noche
+                          {temporada.tipo === "fechas" &&
+                            temporada.fechaInicio &&
+                            temporada.fechaFin && (
+                              <span>
+                                {" "}
+                                | Aplica del {temporada.fechaInicio} al{" "}
+                                {temporada.fechaFin}
+                              </span>
+                            )}
+                          {temporada.tipo === "diasSemana" &&
+                            temporada.diasSemana &&
+                            temporada.diasSemana.length > 0 && (
+                              <span>
+                                {" "}
+                                | Aplica los:{" "}
+                                {temporada.diasSemana
+                                  .map(
+                                    (d) =>
+                                      diasSemanaOptions.find(
+                                        (opt) => opt.value === d
+                                      )?.label
+                                  )
+                                  .join(", ")}
+                              </span>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {(!formData.precios?.temporadas ||
+                    formData.precios.temporadas.length === 0) && (
+                    <div className="text-center text-muted py-4">
+                      <p>No hay temporadas configuradas</p>
+                      <small>
+                        Las temporadas te permiten establecer precios diferentes
+                        según fechas específicas o días de la semana.
+                      </small>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
