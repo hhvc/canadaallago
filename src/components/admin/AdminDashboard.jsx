@@ -133,6 +133,100 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Nuevas tarjetas de contactos */}
+            <div className="col-md-3 mt-3">
+              <div
+                className="card text-white"
+                style={{ backgroundColor: "#6f42c1" }}
+              >
+                <div className="card-body text-center">
+                  <i className="fa fa-envelope fa-2x mb-2"></i>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.totalContactos}</h4>
+                      <small>Total Contactos</small>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-3 mt-3">
+              <div className="card bg-info text-white">
+                <div className="card-body text-center">
+                  <i className="fa fa-calendar-day fa-2x mb-2"></i>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.contactosHoy}</h4>
+                      <small>Contactos Hoy</small>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-3 mt-3">
+              <div className="card bg-warning text-white">
+                <div className="card-body text-center">
+                  <i className="fa fa-bell fa-2x mb-2"></i>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">{stats.contactosNoLeidos}</h4>
+                      <small>Por Leer</small>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-3 mt-3">
+              <div className="card bg-secondary text-white">
+                <div className="card-body text-center">
+                  <i className="fa fa-chart-line fa-2x mb-2"></i>
+                  {loading ? (
+                    <div
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                    >
+                      <span className="visually-hidden">Cargando...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <h4 className="mb-0">
+                        {stats.totalContactos > 0
+                          ? `${Math.round(
+                              (stats.contactosHoy / stats.totalContactos) * 100
+                            )}%`
+                          : "0%"}
+                      </h4>
+                      <small>Hoy vs Total</small>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Módulos de administración */}
@@ -156,12 +250,33 @@ const AdminDashboard = () => {
             <div className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="fa fa-image fa-3x text-success mb-3"></i>
+                  <i className="fa fa-envelope fa-3x text-success mb-3"></i>
+                  <h5 className="card-title">📨 Gestión de Contactos</h5>
+                  <p className="card-text">
+                    Revisa y gestiona todos los mensajes de contacto de
+                    prospectos y clientes.
+                  </p>
+                  <Link to="/admin/contactos" className="btn btn-success">
+                    Gestionar Contactos
+                    {stats.contactosNoLeidos > 0 && (
+                      <span className="badge bg-danger ms-1">
+                        {stats.contactosNoLeidos}
+                      </span>
+                    )}
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="col-md-6 col-lg-4 mb-4">
+              <div className="card h-100 shadow-sm">
+                <div className="card-body text-center">
+                  <i className="fa fa-image fa-3x text-warning mb-3"></i>
                   <h5 className="card-title">🖼️ Gestión de Galería</h5>
                   <p className="card-text">
                     Administra las imágenes de la galería del sitio web.
                   </p>
-                  <Link to="/admin/gallery" className="btn btn-success">
+                  <Link to="/admin/gallery" className="btn btn-warning">
                     Gestionar Galería
                   </Link>
                 </div>
@@ -171,7 +286,7 @@ const AdminDashboard = () => {
             <div className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="fa fa-calendar fa-3x text-warning mb-3"></i>
+                  <i className="fa fa-calendar fa-3x text-info mb-3"></i>
                   <h5 className="card-title">📅 Reservas</h5>
                   <p className="card-text">
                     Gestiona las reservas y calendario de disponibilidad.
@@ -186,7 +301,7 @@ const AdminDashboard = () => {
             <div className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
                 <div className="card-body text-center">
-                  <i className="fa fa-users fa-3x text-info mb-3"></i>
+                  <i className="fa fa-users fa-3x text-dark mb-3"></i>
                   <h5 className="card-title">👥 Gestión de Usuarios</h5>
                   <p className="card-text">
                     Administra usuarios y roles del sistema.
@@ -212,21 +327,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-
-            <div className="col-md-6 col-lg-4 mb-4">
-              <div className="card h-100 shadow-sm">
-                <div className="card-body text-center">
-                  <i className="fa fa-chart-bar fa-3x text-danger mb-3"></i>
-                  <h5 className="card-title">📊 Reportes</h5>
-                  <p className="card-text">
-                    Reportes y estadísticas del negocio.
-                  </p>
-                  <button className="btn btn-outline-secondary" disabled>
-                    Próximamente
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* Acciones rápidas */}
@@ -239,9 +339,14 @@ const AdminDashboard = () => {
                 <Link to="/admin/cabanasform" className="btn btn-primary">
                   ➕ Agregar Nueva Cabaña
                 </Link>
-                <button className="btn btn-outline-secondary" disabled>
+                <Link to="/admin/contactos" className="btn btn-outline-primary">
                   📧 Ver Mensajes
-                </button>
+                  {stats.contactosNoLeidos > 0 && (
+                    <span className="badge bg-danger ms-1">
+                      {stats.contactosNoLeidos}
+                    </span>
+                  )}
+                </Link>
                 <button className="btn btn-outline-secondary" disabled>
                   🔔 Notificaciones
                 </button>

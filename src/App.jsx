@@ -6,7 +6,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Header from "./components/Header";
 import About from "./components/About";
-import Cabanas from "./components/Cabanas";
 import Gallery from "./components/Gallery";
 import Activities from "./components/Activities";
 import Contact from "./components/Contact";
@@ -20,6 +19,7 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import CabanaForm from "./components/cabanas/CabanaForm";
 import GalleryManager from "./components/GalleryManager";
 import DynamicGallery from "./components/DynamicGallery";
+import ContactMessages from './components/ContactMessages';
 
 import AccessDenied from "./components/AccessDenied";
 
@@ -80,6 +80,8 @@ function App() {
             <Route path="/admin/cabanas" element={<AdminCabanas />} />
             <Route path="/admin/cabanasform" element={<CabanaForm />} />
             <Route path="/galeria" element={<DynamicGallery />} />
+            <Route path="/admin/contactos" element={<ContactMessages />} />
+
             {/* Puedes agregar más rutas aquí en el futuro */}
             {/* Ruta 404 */}
             <Route
