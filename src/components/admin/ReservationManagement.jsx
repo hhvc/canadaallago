@@ -141,7 +141,11 @@ const ReservationManagement = () => {
                   >
                     {cabanas.map((cabana) => (
                       <option key={cabana.id} value={cabana.id}>
-                        {cabana.nombre} - ${cabana.precios?.base || 100}/noche
+                        {cabana.nombre} - ${cabana.precios?.base || 100}/noche -{" "}
+                        {cabana.capacidad &&
+                        typeof cabana.capacidad === "object"
+                          ? `${cabana.capacidad.maxPersonas} pers.`
+                          : `${cabana.capacidad || 0} pers.`}
                       </option>
                     ))}
                   </select>
@@ -151,8 +155,12 @@ const ReservationManagement = () => {
                     <div className="bg-light p-3 rounded">
                       <h6 className="mb-1">{selectedCabana.nombre}</h6>
                       <small className="text-muted d-block">
-                        Capacidad: {selectedCabana.capacidad} huéspedes •
-                        Dormitorios: {selectedCabana.dormitorios}
+                        Capacidad:{" "}
+                        {selectedCabana.capacidad &&
+                        typeof selectedCabana.capacidad === "object"
+                          ? selectedCabana.capacidad.maxPersonas
+                          : selectedCabana.capacidad || 0}{" "}
+                        huéspedes • Dormitorios: {selectedCabana.dormitorios}
                       </small>
                       <small className="text-muted">
                         Precio base: ${selectedCabana.precios?.base || 100}
