@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useCabanaForm } from "../../hooks/useCabanaForm";
+import { useCabanaForm } from "../../../hooks/useCabanaForm";
 
 const CabanaForm = ({
   cabanaExistente = null,
@@ -51,6 +51,44 @@ const CabanaForm = ({
     { value: 6, label: "Sábado" },
   ];
 
+  // Función para validar capacidades
+  const validarCapacidades = () => {
+    const maxAdultos = formData.capacidad?.maxAdultos || 0;
+    const maxMenores = formData.capacidad?.maxMenores || 0;
+    const maxPersonas = formData.capacidad?.maxPersonas || 0;
+
+    if (maxPersonas > maxAdultos + maxMenores) {
+      return `El máximo total de personas (${maxPersonas}) no puede ser mayor que la suma de adultos (${maxAdultos}) + menores (${maxMenores}) = ${
+        maxAdultos + maxMenores
+      }`;
+    }
+
+    if (maxPersonas < 1) {
+      return "El máximo total de personas debe ser al menos 1";
+    }
+
+    if (maxAdultos < 1) {
+      return "Debe haber al menos 1 adulto permitido";
+    }
+
+    return null;
+  };
+
+  // Manejar cambios en capacidades con validación
+  const handleCapacidadChange = (field, value) => {
+    const numValue = parseInt(value) || 0;
+
+    // Actualizar el campo
+    handleInputChange(`capacidad.${field}`, numValue);
+
+    // Validar después del cambio
+    const error = validarCapacidades();
+    if (error) {
+      // Podrías mostrar este error de alguna manera, por ahora solo console.log
+      console.warn("Error de validación:", error);
+    }
+  };
+
   return (
     <div className="card mt-5">
       <div
@@ -100,27 +138,6 @@ const CabanaForm = ({
                 <small className="form-text text-muted">
                   Esta descripción aparecerá en la página principal
                 </small>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label">
-                  Capacidad <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  className={`form-control ${
-                    errors.capacidad ? "is-invalid" : ""
-                  }`}
-                  value={formData.capacidad}
-                  onChange={(e) =>
-                    handleInputChange("capacidad", e.target.value)
-                  }
-                  placeholder="Ej: 2 a 5 personas"
-                  required
-                />
-                {errors.capacidad && (
-                  <div className="invalid-feedback">{errors.capacidad}</div>
-                )}
               </div>
             </div>
 
@@ -198,6 +215,105 @@ const CabanaForm = ({
             </div>
           </div>
 
+          {/* NUEVA: Configuración de Capacidades Detalladas */}
+          <div className="mb-4">
+            <div className="card bg-light">
+              <div className="card-header bg-info text-white">
+                <h6 className="mb-0">👥 Configuración de Capacidades</h6>
+              </div>
+              <div className="card-body">
+                <div className="row">
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Máximo de Adultos <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={formData.capacidad?.maxAdultos || ""}
+                        onChange={(e) =>
+                          handleCapacidadChange("maxAdultos", e.target.value)
+                        }
+                        min="1"
+                        max="20"
+                        required
+                      />
+                      <small className="form-text text-muted">
+                        Número máximo de adultos permitidos
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Máximo de Menores <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={formData.capacidad?.maxMenores || ""}
+                        onChange={(e) =>
+                          handleCapacidadChange("maxMenores", e.target.value)
+                        }
+                        min="0"
+                        max="20"
+                        required
+                      />
+                      <small className="form-text text-muted">
+                        Número máximo de menores permitidos (3-12 años)
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Máximo Total de Personas{" "}
+                        <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={formData.capacidad?.maxPersonas || ""}
+                        onChange={(e) =>
+                          handleCapacidadChange("maxPersonas", e.target.value)
+                        }
+                        min="1"
+                        max="40"
+                        required
+                      />
+                      <small className="form-text text-muted">
+                        Máximo total: {formData.capacidad?.maxAdultos || 0}{" "}
+                        adultos + {formData.capacidad?.maxMenores || 0} menores
+                        =
+                        <strong>
+                          {" "}
+                          {(formData.capacidad?.maxAdultos || 0) +
+                            (formData.capacidad?.maxMenores || 0)}
+                        </strong>
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resumen de capacidades */}
+                <div className="alert alert-info py-2 small">
+                  <strong>📊 Resumen de Capacidades:</strong>
+                  <br />• Máximo de adultos:{" "}
+                  <strong>{formData.capacidad?.maxAdultos || 0}</strong>
+                  <br />• Máximo de menores:{" "}
+                  <strong>{formData.capacidad?.maxMenores || 0}</strong>
+                  <br />• Máximo total de personas:{" "}
+                  <strong>{formData.capacidad?.maxPersonas || 0}</strong>
+                  <br />• Capacidad base (2 adultos incluidos):{" "}
+                  <strong>2</strong> adultos
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* NUEVA: Configuración de Precios por Temporada */}
           <div className="mb-4">
             <div className="card bg-light">
@@ -236,11 +352,116 @@ const CabanaForm = ({
                         </div>
                       )}
                       <small className="form-text text-muted">
-                        Precio estándar por noche. Las temporadas se calculan
-                        como multiplicadores de este precio.
+                        Precio estándar por noche (incluye 2 adultos). Las
+                        temporadas se calculan como multiplicadores de este
+                        precio.
                       </small>
                     </div>
                   </div>
+                </div>
+
+                {/* Precios Adicionales por Personas */}
+                <div className="row mb-4">
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Precio Adicional por Adulto{" "}
+                        <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={formData.precios?.adicionalAdulto || ""}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "precios.adicionalAdulto",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <small className="form-text text-muted">
+                        Cargo adicional por cada adulto extra (más de 2)
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Precio Adicional por Menor{" "}
+                        <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={formData.precios?.adicionalMenor || ""}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "precios.adicionalMenor",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <small className="form-text text-muted">
+                        Cargo adicional por cada menor (3-12 años)
+                      </small>
+                    </div>
+                  </div>
+
+                  <div className="col-md-4">
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">
+                        Precio Adicional por Menor 3 años{" "}
+                        <span className="text-danger">*</span>
+                      </label>
+                      <div className="input-group">
+                        <span className="input-group-text">$</span>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={formData.precios?.adicionalMenor3 || ""}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "precios.adicionalMenor3",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
+                          min="0"
+                          required
+                        />
+                      </div>
+                      <small className="form-text text-muted">
+                        Cargo adicional por cada menor menor de 3 años
+                      </small>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resumen de precios adicionales */}
+                <div className="alert alert-warning py-2 small">
+                  <strong>💡 Información de Precios Adicionales:</strong>
+                  <br />• Precio base incluye: <strong>2 adultos</strong>
+                  <br />• Adultos extra:{" "}
+                  <strong>
+                    +${formData.precios?.adicionalAdulto || 0}
+                  </strong>{" "}
+                  por adulto por noche
+                  <br />• Menores (3-12 años):{" "}
+                  <strong>+${formData.precios?.adicionalMenor || 0}</strong> por
+                  menor por noche
+                  <br />• Menores {"<"} 3 años:{" "}
+                  <strong>+${formData.precios?.adicionalMenor3 || 0}</strong>{" "}
+                  por menor por noche
                 </div>
 
                 {/* Temporadas */}

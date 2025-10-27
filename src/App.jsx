@@ -1,29 +1,29 @@
 import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/auth/AuthProvider";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/components/ProtectedRoute";
 //components
-import Navbar from "./components/Navbar";
-import Header from "./components/Header";
-import About from "./components/About";
-import Gallery from "./components/Gallery";
-import Activities from "./components/Activities";
-import Contact from "./components/Contact";
-import Testimonials from "./components/Testimonials";
-import Footer from "./components/Footer";
-import WhatsAppButton from "./components/WhatsAppButton";
+import Navbar from "./components/components/Navbar";
+import Header from "./components/components/Header";
+import About from "./components/components/About";
+import Gallery from "./components/components/Gallery";
+import Activities from "./components/components/Activities";
+import Contact from "./components/components/Contact";
+import Testimonials from "./components/components/Testimonials";
+import Footer from "./components/components/Footer";
+import WhatsAppButton from "./components/components/WhatsAppButton";
 import Login from "./components/auth/Login";
-import CabanasList from "./components/cabanas/CabanasList";
-import AdminCabanas from "./components/cabanas/AdminCabanas";
+import CabanasList from "./components/components/cabanas/CabanasList";
+import AdminCabanas from "./components/components/cabanas/AdminCabanas";
 import AdminDashboard from "./components/admin/AdminDashboard";
-import CabanaForm from "./components/cabanas/CabanaForm";
+import CabanaForm from "./components/components/cabanas/CabanaForm";
 import GalleryManager from "./components/admin/GalleryManager";
-import DynamicGallery from "./components/DynamicGallery";
+import DynamicGallery from "./components/components/DynamicGallery";
 import ContactMessages from "./components/admin/ContactMessages";
 import Calendar from "./components/admin/calendar/Calendar";
 import ReservationManagement from "./components/admin/ReservationManagement";
 
-import AccessDenied from "./components/AccessDenied";
+import AccessDenied from "./components/components/AccessDenied";
 
 function App() {
   useEffect(() => {

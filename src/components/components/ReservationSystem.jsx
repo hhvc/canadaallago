@@ -1,5 +1,5 @@
 // components/ReservationSystem.jsx
-import { useState, useEffect, useMemo } from "react"; // ✅ Agregar useMemo
+import { useState, useEffect, useMemo } from "react";
 import {
   collection,
   getDocs,
@@ -80,32 +80,66 @@ const getPrecioPorNoche = (fecha, preciosConfig) => {
 };
 
 // Función para calcular el desglose de precios
-const calcularDesglosePrecios = (checkIn, checkOut, preciosConfig) => {
+const calcularDesglosePrecios = (
+  checkIn,
+  checkOut,
+  preciosConfig,
+  adultos,
+  menores,
+  menores3
+) => {
   if (!checkIn || !checkOut) return { total: 0, desglose: [], noches: 0 };
 
   const noches = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
   const desglose = [];
   let total = 0;
 
+  // Calcular adicionales por personas (se aplica por noche)
+  const adultosBase = 2; // 2 adultos incluidos en precio base
+  const adicionalAdultos =
+    Math.max(0, adultos - adultosBase) * (preciosConfig.adicionalAdulto || 0);
+  const adicionalMenores = menores * (preciosConfig.adicionalMenor || 0);
+  const adicionalMenores3 = menores3 * (preciosConfig.adicionalMenor3 || 0);
+  const adicionalPersonasPorNoche =
+    adicionalAdultos + adicionalMenores + adicionalMenores3;
+
   for (let i = 0; i < noches; i++) {
     const fecha = new Date(checkIn);
     fecha.setDate(fecha.getDate() + i);
 
     const precioNoche = getPrecioPorNoche(fecha, preciosConfig);
+    const precioTotalNoche = precioNoche.precio + adicionalPersonasPorNoche;
+
     desglose.push({
       fecha: new Date(fecha),
-      precio: precioNoche.precio,
+      precioBase: precioNoche.precio,
+      adicionalPersonas: adicionalPersonasPorNoche,
+      precioTotal: precioTotalNoche,
       temporada: precioNoche.temporada,
       esTemporadaEspecial: precioNoche.esTemporadaEspecial,
+      detalleAdicionales: {
+        adultosExtra: Math.max(0, adultos - adultosBase),
+        adicionalAdultos,
+        adicionalMenores,
+        adicionalMenores3,
+      },
     });
 
-    total += precioNoche.precio;
+    total += precioTotalNoche;
   }
 
   return {
     total,
     desglose,
     noches,
+    adicionalPersonasPorNoche,
+    detalleAdicionales: {
+      adultosBase,
+      adultosExtra: Math.max(0, adultos - adultosBase),
+      adicionalAdultos,
+      adicionalMenores,
+      adicionalMenores3,
+    },
   };
 };
 
@@ -121,7 +155,9 @@ const ReservationSystem = ({ cabana, onClose }) => {
     guestName: "",
     guestEmail: "",
     guestPhone: "",
-    guests: 1,
+    adultos: 2, // Valor por defecto (incluidos en precio base)
+    menores: 0,
+    menores3: 0,
     specialRequests: "",
   });
   const [desglosePrecios, setDesglosePrecios] = useState({
@@ -136,10 +172,29 @@ const ReservationSystem = ({ cabana, onClose }) => {
   const preciosConfig = useMemo(() => {
     // Si cabana no existe o no tiene precios, usar valores por defecto
     if (!cabana || !cabana.precios) {
-      return { base: 100, temporadas: [] };
+      return {
+        base: 100,
+        adicionalAdulto: 0,
+        adicionalMenor: 0,
+        adicionalMenor3: 0,
+        temporadas: [],
+      };
     }
     return cabana.precios;
   }, [cabana]); // Dependencia de cabana completa
+
+  // ✅ Manejo seguro de capacidades (compatibilidad con formato antiguo y nuevo)
+  const capacidades = useMemo(() => {
+    if (!cabana) return { maxAdultos: 4, maxMenores: 2, maxPersonas: 6 };
+
+    if (cabana.capacidad && typeof cabana.capacidad === "object") {
+      // Nuevo formato
+      return cabana.capacidad;
+    } else {
+      // Formato antiguo - crear valores por defecto
+      return { maxAdultos: 4, maxMenores: 2, maxPersonas: 6 };
+    }
+  }, [cabana]);
 
   // Cargar fechas reservadas para esta cabaña
   useEffect(() => {
@@ -180,19 +235,28 @@ const ReservationSystem = ({ cabana, onClose }) => {
     fetchBookedDates();
   }, [cabana?.id]); // ✅ Dependencia segura
 
-  // ✅ CORRECCIÓN: Actualizar desglose de precios cuando cambian las fechas
+  // ✅ CORRECCIÓN: Actualizar desglose de precios cuando cambian las fechas o personas
   useEffect(() => {
     if (selectedDates.checkIn && selectedDates.checkOut) {
       const resultado = calcularDesglosePrecios(
         selectedDates.checkIn,
         selectedDates.checkOut,
-        preciosConfig
+        preciosConfig,
+        reservationInfo.adultos,
+        reservationInfo.menores,
+        reservationInfo.menores3
       );
       setDesglosePrecios(resultado);
     } else {
       setDesglosePrecios({ total: 0, desglose: [], noches: 0 });
     }
-  }, [selectedDates, preciosConfig]); // ✅ preciosConfig es ahora estable
+  }, [
+    selectedDates,
+    preciosConfig,
+    reservationInfo.adultos,
+    reservationInfo.menores,
+    reservationInfo.menores3,
+  ]);
 
   const isDateBooked = (date) => {
     return bookedDates.some(
@@ -250,6 +314,43 @@ const ReservationSystem = ({ cabana, onClose }) => {
     }
   };
 
+  // Función para manejar cambios en el número de personas con validación
+  const handlePersonasChange = (tipo, valor) => {
+    const nuevoValor = parseInt(valor) || 0;
+    const nuevosAdultos =
+      tipo === "adultos" ? nuevoValor : reservationInfo.adultos;
+    const nuevosMenores =
+      tipo === "menores" ? nuevoValor : reservationInfo.menores;
+    const nuevosMenores3 =
+      tipo === "menores3" ? nuevoValor : reservationInfo.menores3;
+
+    const totalPersonas = nuevosAdultos + nuevosMenores + nuevosMenores3;
+    const totalMenores = nuevosMenores + nuevosMenores3;
+
+    // Validar límites
+    if (totalPersonas > capacidades.maxPersonas) {
+      alert(
+        `Máximo ${capacidades.maxPersonas} personas permitidas. Actual: ${totalPersonas}`
+      );
+      return;
+    }
+
+    if (nuevosAdultos > capacidades.maxAdultos) {
+      alert(`Máximo ${capacidades.maxAdultos} adultos permitidos`);
+      return;
+    }
+
+    if (totalMenores > capacidades.maxMenores) {
+      alert(`Máximo ${capacidades.maxMenores} menores permitidos`);
+      return;
+    }
+
+    setReservationInfo((prev) => ({
+      ...prev,
+      [tipo]: nuevoValor,
+    }));
+  };
+
   const handleReservation = async () => {
     if (!cabana?.id) {
       // ✅ Verificar que cabana existe
@@ -267,6 +368,18 @@ const ReservationSystem = ({ cabana, onClose }) => {
       return;
     }
 
+    // Validación final de personas
+    const totalPersonas =
+      reservationInfo.adultos +
+      reservationInfo.menores +
+      reservationInfo.menores3;
+    if (totalPersonas > capacidades.maxPersonas) {
+      alert(
+        `Máximo ${capacidades.maxPersonas} personas permitidas. Actual: ${totalPersonas}`
+      );
+      return;
+    }
+
     setLoading(true);
     try {
       const reservationData = {
@@ -277,16 +390,27 @@ const ReservationSystem = ({ cabana, onClose }) => {
         nights: desglosePrecios.noches,
         total: desglosePrecios.total,
         precioBase: preciosConfig.base,
+        // ✅ NUEVOS CAMPOS: Información de personas
+        adultos: reservationInfo.adultos,
+        menores: reservationInfo.menores,
+        menores3: reservationInfo.menores3,
+        totalPersonas:
+          reservationInfo.adultos +
+          reservationInfo.menores +
+          reservationInfo.menores3,
+        adicionalesPersonas:
+          desglosePrecios.adicionalPersonasPorNoche * desglosePrecios.noches,
         desglosePrecios: desglosePrecios.desglose.map((item) => ({
           fecha: Timestamp.fromDate(item.fecha),
-          precio: item.precio,
+          precioBase: item.precioBase,
+          adicionalPersonas: item.adicionalPersonas,
+          precioTotal: item.precioTotal,
           temporada: item.temporada,
         })),
         status: "pending",
         guestName: reservationInfo.guestName,
         guestEmail: reservationInfo.guestEmail,
         guestPhone: reservationInfo.guestPhone,
-        guests: reservationInfo.guests,
         specialRequests: reservationInfo.specialRequests,
         createdAt: serverTimestamp(),
         userId: user?.uid || null,
@@ -485,13 +609,13 @@ const ReservationSystem = ({ cabana, onClose }) => {
               <div className="mb-3">
                 <h6>{cabana.nombre}</h6>
                 <p className="small text-muted mb-2">
-                  Capacidad: {cabana.capacidad} • {cabana.dormitorios}{" "}
-                  dormitorios
+                  Capacidad: {capacidades.maxPersonas} personas máximo •{" "}
+                  {cabana.dormitorios} dormitorios
                 </p>
                 <div className="bg-light p-2 rounded">
                   <small>
                     <strong>Precio base:</strong> ${preciosConfig.base || 100}{" "}
-                    por noche
+                    por noche (incluye 2 adultos)
                     {preciosConfig.temporadas &&
                       preciosConfig.temporadas.length > 0 && (
                         <span className="text-info">
@@ -535,20 +659,78 @@ const ReservationSystem = ({ cabana, onClose }) => {
 
                   {mostrarDesglose && (
                     <div className="bg-light p-2 rounded small">
+                      {/* Mostrar resumen de adicionales por personas */}
+                      {desglosePrecios.detalleAdicionales && (
+                        <div className="mb-2 p-2 bg-white rounded">
+                          <strong>Adicionales por personas (por noche):</strong>
+                          <div className="d-flex justify-content-between">
+                            <span>
+                              {desglosePrecios.detalleAdicionales.adultosExtra}{" "}
+                              adultos extra
+                            </span>
+                            <span>
+                              +$
+                              {
+                                desglosePrecios.detalleAdicionales
+                                  .adicionalAdultos
+                              }
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span>
+                              {reservationInfo.menores} menores (3-12)
+                            </span>
+                            <span>
+                              +$
+                              {
+                                desglosePrecios.detalleAdicionales
+                                  .adicionalMenores
+                              }
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span>
+                              {reservationInfo.menores3} menores {"<"} 3 años
+                            </span>
+                            <span>
+                              +$
+                              {
+                                desglosePrecios.detalleAdicionales
+                                  .adicionalMenores3
+                              }
+                            </span>
+                          </div>
+                          <div className="d-flex justify-content-between border-top pt-1">
+                            <strong>Total adicional por noche:</strong>
+                            <strong>
+                              +${desglosePrecios.adicionalPersonasPorNoche}
+                            </strong>
+                          </div>
+                        </div>
+                      )}
+
                       {desglosePrecios.desglose.map((noche, index) => (
                         <div
                           key={index}
                           className="d-flex justify-content-between py-1 border-bottom"
                         >
-                          <span>
-                            {noche.fecha.toLocaleDateString()}
-                            {noche.esTemporadaEspecial && (
-                              <span className="badge bg-info ms-1">
-                                ${noche.precio}
-                              </span>
-                            )}
-                          </span>
-                          <span>${noche.precio}</span>
+                          <div>
+                            <div>{noche.fecha.toLocaleDateString()}</div>
+                            <small className="text-muted">
+                              ${noche.precioBase} base
+                              {noche.esTemporadaEspecial && (
+                                <span className="badge bg-info ms-1">
+                                  {noche.temporada}
+                                </span>
+                              )}
+                            </small>
+                          </div>
+                          <div className="text-end">
+                            <div>${noche.precioTotal}</div>
+                            <small className="text-muted">
+                              +${noche.adicionalPersonas} personas
+                            </small>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -559,12 +741,15 @@ const ReservationSystem = ({ cabana, onClose }) => {
                       <span>Total ({desglosePrecios.noches} noches):</span>
                       <span>${desglosePrecios.total}</span>
                     </div>
-                    {preciosConfig.temporadas &&
-                      preciosConfig.temporadas.length > 0 && (
-                        <small className="text-muted">
-                          Incluye tarifas de temporada aplicadas
-                        </small>
-                      )}
+                    <small className="text-muted">
+                      Incluye: {reservationInfo.adultos} adultos,{" "}
+                      {reservationInfo.menores} menores,{" "}
+                      {reservationInfo.menores3} menores 3
+                      {preciosConfig.temporadas &&
+                        preciosConfig.temporadas.length > 0 && (
+                          <span> + tarifas de temporada aplicadas</span>
+                        )}
+                    </small>
                   </div>
                 </div>
               )}
@@ -618,26 +803,79 @@ const ReservationSystem = ({ cabana, onClose }) => {
                 </div>
               </div>
 
+              {/* ✅ NUEVO: Campos separados para adultos, menores y menores de 3 años */}
               <div className="row mt-2">
-                <div className="col-md-6">
-                  <label className="form-label">Huéspedes</label>
+                <div className="col-md-4">
+                  <label className="form-label">Adultos *</label>
                   <select
                     className="form-select"
-                    value={reservationInfo.guests}
+                    value={reservationInfo.adultos}
                     onChange={(e) =>
-                      setReservationInfo({
-                        ...reservationInfo,
-                        guests: parseInt(e.target.value),
-                      })
+                      handlePersonasChange("adultos", e.target.value)
                     }
                   >
-                    {[...Array(cabana.capacidad || 6)].map((_, i) => (
+                    {[...Array(capacidades.maxAdultos || 6)].map((_, i) => (
                       <option key={i + 1} value={i + 1}>
-                        {i + 1} {i === 0 ? "huésped" : "huéspedes"}
+                        {i + 1} adulto{i !== 0 ? "s" : ""}
                       </option>
                     ))}
                   </select>
+                  <small className="text-muted">
+                    Máx: {capacidades.maxAdultos || 4} adultos
+                  </small>
                 </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Menores (3-12 años)</label>
+                  <select
+                    className="form-select"
+                    value={reservationInfo.menores}
+                    onChange={(e) =>
+                      handlePersonasChange("menores", e.target.value)
+                    }
+                  >
+                    {[...Array((capacidades.maxMenores || 2) + 1)].map(
+                      (_, i) => (
+                        <option key={i} value={i}>
+                          {i} menor{i !== 1 ? "es" : ""}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label">Menores {"<"} 3 años</label>
+                  <select
+                    className="form-select"
+                    value={reservationInfo.menores3}
+                    onChange={(e) =>
+                      handlePersonasChange("menores3", e.target.value)
+                    }
+                  >
+                    {[...Array((capacidades.maxMenores || 2) + 1)].map(
+                      (_, i) => (
+                        <option key={i} value={i}>
+                          {i} menor{i !== 1 ? "es" : ""}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <small className="text-muted">
+                  Total:{" "}
+                  <strong>
+                    {reservationInfo.adultos +
+                      reservationInfo.menores +
+                      reservationInfo.menores3}
+                  </strong>{" "}
+                  personas ({reservationInfo.adultos} adultos,{" "}
+                  {reservationInfo.menores} menores, {reservationInfo.menores3}{" "}
+                  menores 3) | Máximo permitido: {capacidades.maxPersonas || 6}
+                </small>
               </div>
 
               <div className="mt-3">

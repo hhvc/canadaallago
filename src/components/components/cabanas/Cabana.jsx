@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ReservationSystem from "../components/ReservationSystem"; // Asegúrate de que la ruta sea correcta
+import ReservationSystem from "../ReservationSystem";
 
 const Cabana = ({ cabana }) => {
   const [showModal, setShowModal] = useState(false);
@@ -74,6 +74,60 @@ const Cabana = ({ cabana }) => {
     }
   };
 
+  // Función para mostrar información de capacidad mejorada
+  const renderCapacidadInfo = () => {
+    // Compatibilidad con el formato antiguo y nuevo
+    if (cabana.capacidad && typeof cabana.capacidad === "object") {
+      // Nuevo formato con capacidades detalladas
+      const { maxAdultos, maxMenores, maxPersonas } = cabana.capacidad;
+      return (
+        <>
+          <li>
+            👥 <strong>Capacidad:</strong> {maxPersonas} personas máximo
+          </li>
+          <li>
+            🧑 <strong>Adultos:</strong> Hasta {maxAdultos}
+          </li>
+          <li>
+            🧒 <strong>Menores:</strong> Hasta {maxMenores}
+          </li>
+        </>
+      );
+    } else {
+      // Formato antiguo - solo número
+      return <li>👥 Capacidad: {cabana.capacidad} personas</li>;
+    }
+  };
+
+  // Función para mostrar información de precios mejorada
+  const renderPrecioInfo = () => {
+    const precios = cabana.precios || {};
+
+    return (
+      <div className="mt-2 p-2 bg-dark bg-opacity-25 rounded">
+        <small>
+          <strong>💵 Tarifas:</strong>
+          <br />• Base: ${precios.base || 100} por noche (2 adultos incluidos)
+          {precios.adicionalAdulto > 0 && (
+            <>
+              <br />• Adulto extra: +${precios.adicionalAdulto} por noche
+            </>
+          )}
+          {precios.adicionalMenor > 0 && (
+            <>
+              <br />• Menor (3-12 años): +${precios.adicionalMenor} por noche
+            </>
+          )}
+          {precios.adicionalMenor3 > 0 && (
+            <>
+              <br />• Menor {"<"} 3 años: +${precios.adicionalMenor3} por noche
+            </>
+          )}
+        </small>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className="col-lg-4 col-md-6 mb-4">
@@ -102,13 +156,17 @@ const Cabana = ({ cabana }) => {
           <div className="card-body d-flex flex-column">
             <h3 className="card-title h5">{cabana.nombre}</h3>
             <ul className="list-unstyled flex-grow-1">
-              <li>🏠 {cabana.capacidad}</li>
+              {renderCapacidadInfo()}
               <li>📐 {cabana.metrosCuadrados} m² cubiertos</li>
               <li>🛏️ {cabana.dormitorios} dormitorios</li>
               {cabana.caracteristicas.map((caracteristica, index) => (
                 <li key={index}>✅ {caracteristica}</li>
               ))}
             </ul>
+
+            {/* Información de precios */}
+            {renderPrecioInfo()}
+
             <div className="mt-auto">
               <div className="d-flex gap-2 flex-wrap">
                 {cabana.imagenes.length > 0 && (

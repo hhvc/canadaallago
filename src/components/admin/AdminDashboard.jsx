@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/auth/useAuth";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
@@ -408,7 +407,11 @@ const AdminDashboard = () => {
                   </p>
                   <Link
                     to="/admin/gallery"
-                    className="btn btn-purple text-white"
+                    className="btn"
+                    style={{
+                      backgroundColor: "var(--bs-purple)",
+                      color: "white",
+                    }}
                   >
                     Gestionar Galería
                   </Link>

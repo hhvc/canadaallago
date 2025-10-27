@@ -1,5 +1,3 @@
-import React from "react";
-
 const Activities = () => {
   return (
     <section id="actividades" className="py-5">

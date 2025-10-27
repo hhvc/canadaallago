@@ -1,5 +1,3 @@
-import React from "react";
-
 const WhatsAppButton = () => {
   const handleWhatsAppClick = () => {
     console.log("WhatsApp button clicked");

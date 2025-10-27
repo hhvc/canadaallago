@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 
 const Gallery = () => {
   const [selectedImage, setSelectedImage] = useState(null);
