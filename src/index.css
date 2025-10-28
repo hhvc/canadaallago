@@ -281,17 +281,6 @@ header {
   border-radius: 0.5rem;
 }
 
-/* === reCAPTCHA === */
-#recaptcha-container {
-  min-height: 78px;
-  display: flex;
-  justify-content: center;
-  margin: 10px 0;
-}
-.grecaptcha-badge {
-  visibility: visible !important;
-}
-
 /* === Botones deshabilitados === */
 .btn:disabled {
   opacity: 0.6;

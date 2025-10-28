@@ -907,7 +907,7 @@ const ReservationSystem = ({ cabana, onClose }) => {
                     Procesando...
                   </>
                 ) : (
-                  `📅 SOLICITAR RESERVA - $${desglosePrecios.total}`
+                  `📅 Solicitar condiciones de reservar - $${desglosePrecios.total}`
                 )}
               </button>
             </div>

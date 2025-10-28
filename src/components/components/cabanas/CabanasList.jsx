@@ -125,7 +125,7 @@ const CabanasList = () => {
         </div>
 
         {/* Filtros y estadísticas */}
-        <div className="row mb-4">
+        {/* <div className="row mb-4">
           <div className="col-12">
             <div className="card bg-dark bg-opacity-50 border-light">
               <div className="card-body py-3">
@@ -165,7 +165,7 @@ const CabanasList = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {cabanas.length === 0 ? (
           <div className="text-center py-5">
@@ -241,7 +241,7 @@ const CabanasList = () => {
             </div>
 
             {/* Información adicional */}
-            <div className="row mt-4">
+            {/* <div className="row mt-4">
               <div className="col-12">
                 <div className="card bg-dark bg-opacity-25 border-light">
                   <div className="card-body text-center">
@@ -254,7 +254,7 @@ const CabanasList = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </>
         )}
       </div>

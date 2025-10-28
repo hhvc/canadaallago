@@ -16,6 +16,7 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showRecaptcha, setShowRecaptcha] = useState(false);
 
   const mountedRef = useRef(true);
   const recaptchaInitializedRef = useRef(false);
@@ -28,29 +29,37 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     };
   }, [cancelPhoneAuth]);
 
-  // Inicializar reCAPTCHA una sola vez
+  // Inicializar reCAPTCHA de forma oculta
   useEffect(() => {
     if (step !== 1 || recaptchaInitializedRef.current) return;
 
     const initializeRecaptcha = async () => {
       try {
         setMessage("Configurando verificación de seguridad...");
-
         console.log("🔄 PhoneLogin: Inicializando reCAPTCHA...");
 
         if (!mountedRef.current) return;
+
+        // Mostrar temporalmente el reCAPTCHA para inicialización
+        setShowRecaptcha(true);
+
+        // Pequeño delay para asegurar que el DOM esté listo
+        await new Promise((resolve) => setTimeout(resolve, 100));
 
         console.log("🔄 PhoneLogin: Llamando a setupPhoneAuth...");
         await setupPhoneAuth("recaptcha-container");
         recaptchaInitializedRef.current = true;
 
         if (mountedRef.current) {
+          // Ocultar después de la inicialización
+          setShowRecaptcha(false);
           setMessage("");
           console.log("✅ PhoneLogin: reCAPTCHA Enterprise inicializado");
         }
       } catch (error) {
         console.error("❌ PhoneLogin: Error inicializando reCAPTCHA:", error);
         if (mountedRef.current) {
+          setShowRecaptcha(false);
           setMessage(
             `Error de seguridad: ${error.message}. Recarga la página.`
           );
@@ -131,6 +140,7 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
     setStep(1);
     setCode("");
     setMessage("");
+    setShowRecaptcha(false);
   };
 
   const displayedFullPhone = `+549${phoneDigits.replace(/\D/g, "")}`;
@@ -163,14 +173,12 @@ const PhoneLogin = ({ onSwitchToEmail, onSwitchToGoogle }) => {
             </small>
           </div>
 
-          {/* Contenedor reCAPTCHA - oculto pero presente */}
+          {/* Contenedor reCAPTCHA - completamente oculto */}
           <div
-            id="recaptcha-container"
             style={{
-              position: "absolute",
-              left: "-9999px",
-              width: 1,
-              height: 1,
+              display: showRecaptcha ? "block" : "none",
+              width: "1px",
+              height: "1px",
               overflow: "hidden",
             }}
           />

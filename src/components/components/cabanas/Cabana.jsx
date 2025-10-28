@@ -174,7 +174,7 @@ const Cabana = ({ cabana }) => {
                     className="btn btn-info btn-sm"
                     onClick={() => openModal(0)}
                   >
-                    📸 VER FOTOS
+                    📸 Ver fotos
                   </button>
                 )}
 
@@ -184,7 +184,7 @@ const Cabana = ({ cabana }) => {
                     className="btn btn-success btn-sm"
                     onClick={openReservationModal}
                   >
-                    📅 RESERVAR
+                    📅 Simular Reserva
                   </button>
                 )}
 
