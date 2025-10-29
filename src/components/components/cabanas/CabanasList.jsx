@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "../../../firebase/config";
 import Cabana from "./Cabana";
+import SmartSearch from "./SmartSearch";
 
 const CabanasList = () => {
   const [cabanas, setCabanas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filtroDestacadas, setFiltroDestacadas] = useState(false);
+  const [showSmartSearch, setShowSmartSearch] = useState(false);
 
   useEffect(() => {
     const fetchCabanas = async () => {
@@ -124,7 +126,45 @@ const CabanasList = () => {
           </div>
         </div>
 
-        {/* Filtros y estadísticas */}
+        {/* Botón para mostrar/ocultar el SmartSearch */}
+        <div className="row mb-4">
+          <div className="col-12 text-center">
+            <button
+              className={`btn ${
+                showSmartSearch ? "btn-warning" : "btn-success"
+              } btn-lg`}
+              onClick={() => setShowSmartSearch(!showSmartSearch)}
+            >
+              {showSmartSearch ? (
+                <>🙈 Ocultar Asistente de Búsqueda</>
+              ) : (
+                <>🔍 Buscar/ Solicitar presupuesto personalizado</>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Componente SmartSearch */}
+        {showSmartSearch && (
+          <div className="row mb-5">
+            <div className="col-12">
+              <div className="card shadow-lg border-0">
+                <div className="card-body p-0">
+                  <SmartSearch />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lista de cabañas */}
+        <div className="row">
+          {cabanas.map((cabana) => (
+            <Cabana key={cabana.id} cabana={cabana} />
+          ))}
+        </div>
+
+        {/* Filtros y estadísticas - Comentado para futuro uso */}
         {/* <div className="row mb-4">
           <div className="col-12">
             <div className="card bg-dark bg-opacity-50 border-light">
@@ -233,14 +273,7 @@ const CabanasList = () => {
               </div>
             )}
 
-            {/* Lista de cabañas */}
-            <div className="row">
-              {cabanas.map((cabana) => (
-                <Cabana key={cabana.id} cabana={cabana} />
-              ))}
-            </div>
-
-            {/* Información adicional */}
+            {/* Información adicional - Comentado para futuro uso */}
             {/* <div className="row mt-4">
               <div className="col-12">
                 <div className="card bg-dark bg-opacity-25 border-light">
