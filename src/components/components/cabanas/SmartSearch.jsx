@@ -9,6 +9,7 @@ const SmartSearch = () => {
   const [loading, setLoading] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
+  const [dateErrors, setDateErrors] = useState({ checkIn: "", checkOut: "" });
 
   // Estado del formulario de búsqueda
   const [searchParams, setSearchParams] = useState({
@@ -41,6 +42,34 @@ const SmartSearch = () => {
 
     fetchCabanas();
   }, []);
+
+  // Validar fechas
+  useEffect(() => {
+    const errors = { checkIn: "", checkOut: "" };
+
+    if (searchParams.checkIn) {
+      const checkInDate = new Date(searchParams.checkIn);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 0);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      if (checkInDate < tomorrow) {
+        errors.checkIn = "La fecha de ingreso debe ser a partir de mañana.";
+      }
+    }
+
+    if (searchParams.checkIn && searchParams.checkOut) {
+      const checkInDate = new Date(searchParams.checkIn);
+      const checkOutDate = new Date(searchParams.checkOut);
+
+      if (checkOutDate <= checkInDate) {
+        errors.checkOut =
+          "La fecha de salida debe ser posterior a la de ingreso.";
+      }
+    }
+
+    setDateErrors(errors);
+  }, [searchParams.checkIn, searchParams.checkOut]);
 
   // Calcular noches
   const calcularNoches = () => {
@@ -117,6 +146,12 @@ const SmartSearch = () => {
 
   // Función principal de búsqueda
   const handleSearch = async () => {
+    // Validar fechas antes de buscar
+    if (dateErrors.checkIn || dateErrors.checkOut) {
+      alert("Por favor corrige las fechas antes de buscar.");
+      return;
+    }
+
     if (!searchParams.checkIn || !searchParams.checkOut) {
       alert("Por favor selecciona las fechas de tu estadía");
       return;
@@ -246,9 +281,33 @@ const SmartSearch = () => {
     navigate(`/reservar?${params.toString()}`);
   };
 
-  // Fecha mínima (hoy)
+  // Navegar a contacto con los detalles de la búsqueda
+  const handleSolicitarPropuestaPersonalizada = () => {
+    const mensaje = `Estoy buscando alojamiento para: 
+- Fechas: ${searchParams.checkIn} a ${searchParams.checkOut}
+- ${calcularNoches()} noches
+- ${searchParams.adultos} adultos, ${
+      searchParams.menores
+    } menores (3-12 años), ${searchParams.menores3} menores (menores de 3 años)
+- Presupuesto máximo: ${
+      searchParams.presupuestoMaximo
+        ? "$" + searchParams.presupuestoMaximo
+        : "No especificado"
+    }
+- Observaciones (agregar):`;
+
+    navigate("/contacto", {
+      state: {
+        prefillMessage: mensaje,
+      },
+    });
+  };
+
+  // Fecha mínima (mañana)
   const getMinDate = () => {
-    return new Date().toISOString().split("T")[0];
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
   };
 
   return (
@@ -269,25 +328,35 @@ const SmartSearch = () => {
               <label className="form-label fw-bold">📅 Fecha de Ingreso</label>
               <input
                 type="date"
-                className="form-control"
+                className={`form-control ${
+                  dateErrors.checkIn ? "is-invalid" : ""
+                }`}
                 value={searchParams.checkIn}
                 onChange={(e) =>
                   setSearchParams({ ...searchParams, checkIn: e.target.value })
                 }
                 min={getMinDate()}
               />
+              {dateErrors.checkIn && (
+                <div className="invalid-feedback">{dateErrors.checkIn}</div>
+              )}
             </div>
             <div className="col-md-6">
               <label className="form-label fw-bold">📅 Fecha de Salida</label>
               <input
                 type="date"
-                className="form-control"
+                className={`form-control ${
+                  dateErrors.checkOut ? "is-invalid" : ""
+                }`}
                 value={searchParams.checkOut}
                 onChange={(e) =>
                   setSearchParams({ ...searchParams, checkOut: e.target.value })
                 }
                 min={searchParams.checkIn || getMinDate()}
               />
+              {dateErrors.checkOut && (
+                <div className="invalid-feedback">{dateErrors.checkOut}</div>
+              )}
             </div>
 
             {/* Personas */}
@@ -384,38 +453,41 @@ const SmartSearch = () => {
           </div>
 
           {/* Resumen de búsqueda */}
-          {searchParams.checkIn && searchParams.checkOut && (
-            <div className="alert alert-info mt-3">
-              <div className="row text-center">
-                <div className="col-md-3">
-                  <strong>Noches:</strong>
-                  <br />
-                  <span className="h5">{calcularNoches()}</span>
-                </div>
-                <div className="col-md-3">
-                  <strong>Total personas:</strong>
-                  <br />
-                  <span className="h5">
-                    {searchParams.adultos +
-                      searchParams.menores +
-                      searchParams.menores3}
-                  </span>
-                </div>
-                <div className="col-md-3">
-                  <strong>Adultos:</strong>
-                  <br />
-                  <span className="h5">{searchParams.adultos}</span>
-                </div>
-                <div className="col-md-3">
-                  <strong>Menores:</strong>
-                  <br />
-                  <span className="h5">
-                    {searchParams.menores + searchParams.menores3}
-                  </span>
+          {searchParams.checkIn &&
+            searchParams.checkOut &&
+            !dateErrors.checkIn &&
+            !dateErrors.checkOut && (
+              <div className="alert alert-info mt-3">
+                <div className="row text-center">
+                  <div className="col-md-3">
+                    <strong>Noches:</strong>
+                    <br />
+                    <span className="h5">{calcularNoches()}</span>
+                  </div>
+                  <div className="col-md-3">
+                    <strong>Total personas:</strong>
+                    <br />
+                    <span className="h5">
+                      {searchParams.adultos +
+                        searchParams.menores +
+                        searchParams.menores3}
+                    </span>
+                  </div>
+                  <div className="col-md-3">
+                    <strong>Adultos:</strong>
+                    <br />
+                    <span className="h5">{searchParams.adultos}</span>
+                  </div>
+                  <div className="col-md-3">
+                    <strong>Menores:</strong>
+                    <br />
+                    <span className="h5">
+                      {searchParams.menores + searchParams.menores3}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Botón de búsqueda */}
           <div className="text-center mt-4">
@@ -423,7 +495,11 @@ const SmartSearch = () => {
               className="btn btn-success btn-lg px-5"
               onClick={handleSearch}
               disabled={
-                loading || !searchParams.checkIn || !searchParams.checkOut
+                loading ||
+                !searchParams.checkIn ||
+                !searchParams.checkOut ||
+                !!dateErrors.checkIn ||
+                !!dateErrors.checkOut
               }
             >
               {loading ? (
@@ -445,10 +521,11 @@ const SmartSearch = () => {
           <div className="card">
             <div className="card-header bg-success text-white">
               <h5 className="mb-0">
-                💡 Recomendaciones para tu búsqueda
+                💡 Encontramos
                 <span className="badge bg-light text-success ms-2">
-                  {searchResults.length} opciones encontradas
-                </span>
+                  {searchResults.length} coincidencias automáticas
+                </span>{" "}
+                pero puedes pedir un presupuesto personalizado
               </h5>
             </div>
 
@@ -457,7 +534,8 @@ const SmartSearch = () => {
                 <div className="text-center py-4">
                   <div className="alert alert-warning">
                     <h5>
-                      😔 No encontramos cabañas que coincidan con tu búsqueda
+                      😔 No hay coincidencias automáticas, pero déjanos tus
+                      datos y te enviaremos una propuesta personalizada
                     </h5>
                     <p className="mb-3">Puedes intentar:</p>
                     <ul className="text-start">
@@ -469,10 +547,16 @@ const SmartSearch = () => {
                       </li>
                     </ul>
                     <button
-                      className="btn btn-outline-primary mt-2"
+                      className="btn btn-outline-primary m-2"
                       onClick={() => setShowResults(false)}
                     >
                       Modificar búsqueda
+                    </button>
+                    <button
+                      className="btn btn-outline-primary m-2"
+                      onClick={handleSolicitarPropuestaPersonalizada}
+                    >
+                      → Solicitar propuesta personalizada
                     </button>
                   </div>
                 </div>
@@ -609,10 +693,16 @@ const SmartSearch = () => {
 
                   <div className="text-center mt-4">
                     <button
-                      className="btn btn-outline-secondary"
+                      className="btn btn-outline-secondary m-2"
                       onClick={() => setShowResults(false)}
                     >
                       ← Realizar nueva búsqueda
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary m-2"
+                      onClick={handleSolicitarPropuestaPersonalizada}
+                    >
+                      → Solicitar propuesta personalizada
                     </button>
                   </div>
                 </>

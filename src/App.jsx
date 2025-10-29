@@ -2,28 +2,29 @@ import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/auth/AuthProvider";
 import ProtectedRoute from "./components/components/ProtectedRoute";
-//components
+
+// Componentes de páginas
+import HomePage from "./pages/HomePage";
+import ReservationPage from "./pages/ReservationPage";
+
+// Componentes generales
 import Navbar from "./components/components/Navbar";
-import Header from "./components/components/Header";
-import About from "./components/components/About";
-import Gallery from "./components/components/Gallery";
-import Activities from "./components/components/Activities";
-import Contact from "./components/components/Contact";
-import Testimonials from "./components/components/Testimonials";
 import Footer from "./components/components/Footer";
 import WhatsAppButton from "./components/components/WhatsAppButton";
 import Login from "./components/auth/Login";
+import DynamicGallery from "./components/components/DynamicGallery";
+import Contact from "./components/components/Contact";
+import AccessDenied from "./components/components/AccessDenied";
+
+// Componentes de administración
+import AdminDashboard from "./components/admin/AdminDashboard";
+import GalleryManager from "./components/admin/GalleryManager";
 import CabanasList from "./components/components/cabanas/CabanasList";
 import AdminCabanas from "./components/components/cabanas/AdminCabanas";
-import AdminDashboard from "./components/admin/AdminDashboard";
 import CabanaForm from "./components/components/cabanas/CabanaForm";
-import GalleryManager from "./components/admin/GalleryManager";
-import DynamicGallery from "./components/components/DynamicGallery";
 import ContactMessages from "./components/admin/ContactMessages";
 import Calendar from "./components/admin/calendar/Calendar";
 import ReservationManagement from "./components/admin/ReservationManagement";
-
-import AccessDenied from "./components/components/AccessDenied";
 import TestimonialManagement from "./components/admin/TestimonialManagement";
 
 function App() {
@@ -37,21 +38,6 @@ function App() {
     }
   }, []);
 
-  // Componente para la página principal
-  const HomePage = () => (
-    <>
-      <Header />
-      <About />
-      <CabanasList />
-      {/* <Cabanas /> */}
-      {/* <DynamicGallery/> */}
-      <Gallery />
-      <Activities />
-      <Contact />
-      <Testimonials />
-    </>
-  );
-
   return (
     <AuthProvider>
       <Router>
@@ -63,6 +49,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/access-denied" element={<AccessDenied />} />
             <Route path="/galeria" element={<DynamicGallery />} />
+            <Route path="/contacto" element={<Contact />} />
+            <Route path="/reservar" element={<ReservationPage />} />
 
             {/* Rutas protegidas para administradores */}
             <Route
@@ -117,7 +105,7 @@ function App() {
               path="/admin/calendar"
               element={
                 <ProtectedRoute role="admin">
-                  <Calendar /> {/* ✅ Ahora usa la ruta correcta */}
+                  <Calendar />
                 </ProtectedRoute>
               }
             />
@@ -137,7 +125,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Puedes agregar más rutas aquí en el futuro */}
+
             {/* Ruta 404 */}
             <Route
               path="*"

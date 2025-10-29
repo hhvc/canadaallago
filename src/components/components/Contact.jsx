@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useContactForm } from "../../hooks/useContactForm";
+import { useLocation } from "react-router-dom";
 
 const Contact = () => {
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,6 +13,16 @@ const Contact = () => {
 
   const [errors, setErrors] = useState({});
   const { loading, error, success, submitContactForm } = useContactForm();
+
+  // Efecto para prellenar el mensaje si viene de SmartSearch
+  useEffect(() => {
+    if (location.state?.prefillMessage) {
+      setFormData((prev) => ({
+        ...prev,
+        message: location.state.prefillMessage,
+      }));
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

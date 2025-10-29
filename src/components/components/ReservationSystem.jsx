@@ -8,9 +8,12 @@ import {
   addDoc,
   serverTimestamp,
   Timestamp,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { useAuth } from "../../context/auth/useAuth";
+import { useSearchParams } from "react-router-dom";
 
 // Función auxiliar para manejar fechas de Firestore
 const getFirestoreDate = (firestoreTimestamp) => {
@@ -143,7 +146,8 @@ const calcularDesglosePrecios = (
   };
 };
 
-const ReservationSystem = ({ cabana, onClose }) => {
+const ReservationSystem = ({ cabana: propCabana, onClose }) => {
+  const [searchParams] = useSearchParams();
   const [selectedDates, setSelectedDates] = useState({
     checkIn: null,
     checkOut: null,
@@ -166,7 +170,93 @@ const ReservationSystem = ({ cabana, onClose }) => {
     noches: 0,
   });
   const [mostrarDesglose, setMostrarDesglose] = useState(false);
+
+  // ✅ NUEVO: Estados para manejar cabaña desde URL
+  const [cabanaFromURL, setCabanaFromURL] = useState(null);
+  const [loadingCabana, setLoadingCabana] = useState(false);
+  const [cabanaError, setCabanaError] = useState("");
+
   const { user } = useAuth();
+
+  // ✅ NUEVO: Obtener parámetros de la URL
+  const cabanaIdFromURL = searchParams.get("cabana");
+  const checkInFromURL = searchParams.get("checkIn");
+  const checkOutFromURL = searchParams.get("checkOut");
+  const adultosFromURL = searchParams.get("adultos");
+  const menoresFromURL = searchParams.get("menores");
+  const menores3FromURL = searchParams.get("menores3");
+
+  // ✅ NUEVO: Cargar cabaña desde Firestore si viene de URL
+  useEffect(() => {
+    const loadCabanaFromURL = async () => {
+      if (!cabanaIdFromURL || propCabana) return; // Si ya tenemos cabaña por props, no cargar
+
+      setLoadingCabana(true);
+      setCabanaError("");
+
+      try {
+        const cabanaDoc = await getDoc(doc(db, "cabanas", cabanaIdFromURL));
+        if (cabanaDoc.exists()) {
+          setCabanaFromURL({
+            id: cabanaDoc.id,
+            ...cabanaDoc.data(),
+          });
+        } else {
+          setCabanaError("No se encontró la cabaña solicitada.");
+        }
+      } catch (error) {
+        console.error("Error cargando cabaña desde URL:", error);
+        setCabanaError("Error al cargar la información de la cabaña.");
+      } finally {
+        setLoadingCabana(false);
+      }
+    };
+
+    loadCabanaFromURL();
+  }, [cabanaIdFromURL, propCabana]);
+
+  // ✅ NUEVO: Pre-seleccionar fechas y personas si vienen de URL
+  useEffect(() => {
+    if (checkInFromURL) {
+      const checkInDate = new Date(checkInFromURL);
+      setSelectedDates((prev) => ({ ...prev, checkIn: checkInDate }));
+    }
+
+    if (checkOutFromURL) {
+      const checkOutDate = new Date(checkOutFromURL);
+      setSelectedDates((prev) => ({ ...prev, checkOut: checkOutDate }));
+    }
+
+    if (adultosFromURL) {
+      setReservationInfo((prev) => ({
+        ...prev,
+        adultos: parseInt(adultosFromURL) || 2,
+      }));
+    }
+
+    if (menoresFromURL) {
+      setReservationInfo((prev) => ({
+        ...prev,
+        menores: parseInt(menoresFromURL) || 0,
+      }));
+    }
+
+    if (menores3FromURL) {
+      setReservationInfo((prev) => ({
+        ...prev,
+        menores3: parseInt(menores3FromURL) || 0,
+      }));
+    }
+  }, [
+    checkInFromURL,
+    checkOutFromURL,
+    adultosFromURL,
+    menoresFromURL,
+    menores3FromURL,
+  ]);
+
+  // ✅ Usar cabaña de props o de URL
+  const cabana = propCabana || cabanaFromURL;
 
   // ✅ CORRECCIÓN CRÍTICA: Usar useMemo para preciosConfig con manejo seguro
   const preciosConfig = useMemo(() => {
@@ -422,7 +512,14 @@ const ReservationSystem = ({ cabana, onClose }) => {
       alert(
         "¡Reserva enviada correctamente! Te contactaremos pronto para confirmar."
       );
-      onClose();
+
+      // ✅ NUEVO: Manejar cierre diferente según de dónde venga
+      if (onClose) {
+        onClose(); // Desde admin
+      } else {
+        // Desde URL, redirigir a home o mostrar mensaje de éxito
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error("Error creando reserva:", error);
       alert("Error al procesar la reserva. Por favor intenta nuevamente.");
@@ -509,14 +606,43 @@ const ReservationSystem = ({ cabana, onClose }) => {
     setCurrentMonth(newDate);
   };
 
-  // ✅ CORRECCIÓN: Verificar si cabana existe antes de renderizar
+  // ✅ CORRECCIÓN MEJORADA: Manejar estados de carga y error
+  if (loadingCabana) {
+    return (
+      <div className="container mt-4 text-center">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Cargando...</span>
+        </div>
+        <p className="mt-2">Cargando información de la cabaña...</p>
+      </div>
+    );
+  }
+
+  if (cabanaError) {
+    return (
+      <div className="alert alert-danger text-center">
+        <h4>❌ Error</h4>
+        <p>{cabanaError}</p>
+        <button
+          className="btn btn-secondary"
+          onClick={onClose || (() => window.history.back())}
+        >
+          Volver
+        </button>
+      </div>
+    );
+  }
+
   if (!cabana) {
     return (
       <div className="alert alert-danger text-center">
         <h4>❌ Error</h4>
         <p>No se pudo cargar la información de la cabaña.</p>
-        <button className="btn btn-secondary" onClick={onClose}>
-          Cerrar
+        <button
+          className="btn btn-secondary"
+          onClick={onClose || (() => window.history.back())}
+        >
+          Volver
         </button>
       </div>
     );
@@ -524,6 +650,17 @@ const ReservationSystem = ({ cabana, onClose }) => {
 
   return (
     <div className="reservation-system">
+      {/* ✅ NUEVO: Indicador de origen */}
+      {!propCabana && (
+        <div className="alert alert-info mb-4">
+          <h6>📅 Reserva desde Búsqueda</h6>
+          <p className="mb-0">
+            Estás realizando una reserva para <strong>{cabana.nombre}</strong>.
+            Las fechas y personas han sido pre-seleccionadas según tu búsqueda.
+          </p>
+        </div>
+      )}
+
       <div className="row">
         <div className="col-md-6">
           <div className="card">
@@ -907,7 +1044,7 @@ const ReservationSystem = ({ cabana, onClose }) => {
                     Procesando...
                   </>
                 ) : (
-                  `📅 Solicitar condiciones de reservar - $${desglosePrecios.total}`
+                  `📅 Solicitar condiciones de reserva - $${desglosePrecios.total}`
                 )}
               </button>
             </div>
