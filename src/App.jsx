@@ -24,6 +24,7 @@ import Calendar from "./components/admin/calendar/Calendar";
 import ReservationManagement from "./components/admin/ReservationManagement";
 
 import AccessDenied from "./components/components/AccessDenied";
+import TestimonialManagement from "./components/admin/TestimonialManagement";
 
 function App() {
   useEffect(() => {
@@ -128,7 +129,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
+            <Route
+              path="/admin/testimonios"
+              element={
+                <ProtectedRoute role="admin">
+                  <TestimonialManagement />
+                </ProtectedRoute>
+              }
+            />
             {/* Puedes agregar más rutas aquí en el futuro */}
             {/* Ruta 404 */}
             <Route

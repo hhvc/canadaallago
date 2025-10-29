@@ -432,7 +432,7 @@ const SmartSearch = () => {
                   Buscando opciones...
                 </>
               ) : (
-                <>🎯 Enviar solicitud</>
+                <>🎯 Ver opciones</>
               )}
             </button>
           </div>

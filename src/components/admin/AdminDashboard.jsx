@@ -396,6 +396,23 @@ const AdminDashboard = () => {
               </div>
             </div>
 
+            <div className="col-md-6 col-lg-4 mb-4">
+              <div className="card h-100 shadow-sm">
+                <div className="card-body text-center">
+                  <i className="fa fa-comments fa-3x text-info mb-3"></i>
+                  <h5 className="card-title">💬 Gestión de Comentarios</h5>
+                  <p className="card-text">
+                    Revisa, aprueba o rechaza comentarios de huéspedes para
+                    mostrar en el sitio.
+                  </p>
+                  <Link to="/admin/testimonios" className="btn btn-info">
+                    Gestionar Comentarios
+                    {/* Puedes agregar un badge con la cantidad pendiente si quieres */}
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* Gestión de Galería */}
             <div className="col-md-6 col-lg-4 mb-4">
               <div className="card h-100 shadow-sm">
