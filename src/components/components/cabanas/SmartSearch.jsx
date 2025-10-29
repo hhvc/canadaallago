@@ -682,7 +682,7 @@ const SmartSearch = () => {
                                 className="btn btn-success"
                                 onClick={() => handleReservar(cabana.id)}
                               >
-                                🏠 Reservar esta cabaña
+                                🏠 Simular reserva
                               </button>
                             </div>
                           </div>
